@@ -1,0 +1,10 @@
+#Don't include tmp files
+tmp/
+
+#Don't include debug
+debug/
+
+#Don't include data
+*.wav
+*.model
+
