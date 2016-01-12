@@ -31,7 +31,7 @@ def callback(in_data, frame_count, time_info, status):
     return (data, pyaudio.paContinue)
 
 
-def record():
+def main():
     global waveFrames
     global recordNumber
     dirName, recordNumber, recordDuration = interactions.getRecordParameters()

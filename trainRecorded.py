@@ -26,7 +26,7 @@ def modelMergeNew(data):
     model, minFrames, maxFrames, name, iteration = data
     f.modelMergeNew(model, minFrames, maxFrames, name, iteration)
 
-if __name__ == "__main__":
+def main():
     global models
     global modelTolerance
     global modelScore
