@@ -3,8 +3,12 @@
 import record
 import trainRecorded as train
 import listen
+import functions as f
 
 print("Welcome to soundevent recognition on RasPi")
+print("Setting up everything...")
+
+f.clearTmpFolder()
 
 userDoesntWantToQuit = True
 while userDoesntWantToQuit:
@@ -13,7 +17,7 @@ while userDoesntWantToQuit:
     print("\t2\ttrain a model")
     print("\t3\tlisten an recognize sounds")
     print("\t4\tquit")
-    userinput = input("What do you want to do?")
+    userInput = input("What do you want to do?")
     try:
         selectedOption = int(userInput)
         if selectedOption > 0:

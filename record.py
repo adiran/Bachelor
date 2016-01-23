@@ -51,7 +51,7 @@ def main():
                     stream_callback=callback,
                     input_device_index=conf.DEVICE_INDEX)
 
-        input("Press Enter key to start " + str(recordNumber) + ". recording")
+        raw_input("Press Enter key to start " + str(recordNumber) + ". recording")
 
         # wait to prevent to capture the hitting of enter key
         time.sleep(.08)
@@ -75,7 +75,17 @@ def main():
         # close stream
         stream.close()
         
+
+        wf = wave.open("tmp/tmp.wav", "wb")
+        recordNumber = recordNumber + 1
+        wf.setnchannels(conf.CHANNELS)
+        wf.setsampwidth(p.get_sample_size(conf.FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(waveFrames))
+        wf.close
+
         userInput = interactions.wantToStoreRecord(waveFrames)
+        f.clearTmpFolder()
         if userInput == '':
             # write audio data to wave file
             wf = wave.open(
@@ -87,7 +97,7 @@ def main():
             wf.writeframes(b''.join(waveFrames))
             wf.close
 
-        userInput = input(
+        userInput = raw_input(
             "Press Enter to record another record or input anything to quit.")
 
     
@@ -96,6 +106,3 @@ def main():
     print("Quit succefull")
     return("0")
 
-# TODO just for testing. Remove before finish
-# if this script is run directly
-record()

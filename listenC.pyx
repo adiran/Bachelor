@@ -19,29 +19,47 @@ ctypedef np.int16_t CINT16_t
 CUINT32 = np.uint32
 ctypedef np.uint32_t CUINT32_t
 
-# load the stored models
-models = f.loadModels()
+#global variables see setup() for more information
+#models
+#modelPosition
+#modelNumber
+#frameCount
+#number
+#switch
+#frame
 
-# stores the position in the model
-modelPosition = 0
+cpdef setup():
+    global models
+    global modelPosition
+    global modelNumber
+    global frameCount
+    global number
+    global switch
+    global frame
 
-# stores the model which we assume to be recognized. -1 if no model has
-# been recognized
-modelNumber = -1
+    # load the stored models
+    models = f.loadModels()
+    
+    # stores the position in the model
+    modelPosition = 0
 
-# decrements with every frame that is not recognized as an model frame. If
-# zero we don't have a match
-frameCount = conf.FRAME_COUNT
+    # stores the model which we assume to be recognized. -1 if no model has
+    # been recognized
+    modelNumber = -1
 
-# preprocessed audio data
-number = []
+    # decrements with every frame that is not recognized as an model frame. If
+    # zero we don't have a match
+    frameCount = conf.FRAME_COUNT
 
-# we store 2 frames of collected audio data as 1 frame in sample so here
-# is a switch
-switch = True
+    # preprocessed audio data
+    number = []
 
-# used for storing half of a frame because of the switch
-frame = []
+    # we store 2 frames of collected audio data as 1 frame in sample so here
+    # is a switch
+    switch = True
+
+    # used for storing half of a frame because of the switch
+    frame = []    
 
 cpdef listen(in_data):
     cdef np.ndarray[CUINT32_t] data

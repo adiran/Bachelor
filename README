@@ -1,3 +1,16 @@
 Bachlorarbeit
 
 Geräuscherkenner auf einem RaspberryPi
+
+
+Vorraussetzungen:
+
+numpy
+scipy
+cython
+pyaudio
+sudo pip install -e git+https://github.com/jameslyons/python_speech_features#egg=python-speech-features
+
+to compile the cython code:
+rm functions.c* ; rm qualitycheck.c* ; rm listenC.c* ; python setup.py build_ext --inplace
+

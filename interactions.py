@@ -1,7 +1,11 @@
+# import of python modules
 import os
 import pyaudio
 import time
+import wave
 import numpy as np
+
+#own imports
 import config as conf
 
 # instantiate PyAudio
@@ -26,7 +30,7 @@ def getTrainParameters():
                 records.append(file)
                 i += 1
                 print("\t" + str(i) + ": " + file)
-        userInput = input("Which option do you want to choose? ")
+        userInput = raw_input("Which option do you want to choose? ")
         try:
             selectedOption = int(userInput)
             if selectedOption > 0:
@@ -48,7 +52,7 @@ def getTrainParameters():
 
     print("What name should your model have?")
     modelName = recordName
-    userInput = input(
+    userInput = raw_input(
         "Input name of model or nothing for the same name as the records (" +
         str(recordName) +
         ")?")
@@ -61,7 +65,7 @@ def getTrainParameters():
           str(minFrames) + ".")
     isUserInputNotANumber = True
     while isUserInputNotANumber:
-        userInput = input(
+        userInput = raw_input(
             "Input number of frames or nothing for minimum (" + str(minFrames) + ")?")
         if userInput != "":
             try:
@@ -82,7 +86,7 @@ def getTrainParameters():
     maxFrames = 2 * minFrames
     isUserInputNotANumber = True
     while isUserInputNotANumber:
-        userInput = input(
+        userInput = raw_input(
             "Input number of frames or nothing for standard (" + str(maxFrames) + ")?")
         if userInput != "":
             try:
@@ -106,7 +110,7 @@ def getTrainParameters():
     isUserInputNotANumber = True
     iterations = recordNumber
     while isUserInputNotANumber:
-        userInput = input(
+        userInput = raw_input(
             "Input number of computations or nothing for maximum (" +
             str(recordNumber) +
             ")?")
@@ -121,7 +125,7 @@ def getTrainParameters():
                             str(recordNumber) +
                             ", so we compute no more")
                     else:
-                        tmpIterations = iterations
+                        iterations = tmpIterations
                 else:
                     print("Number should be greater 0")
             except ValueError:
@@ -136,7 +140,7 @@ def getModelNumber(maxModelNumber):
     print("Which model do you want to store and use?")
     isUserInputNotANumber = True
     while isUserInputNotANumber:
-        userInput = input("Model number: ")
+        userInput = raw_input("Model number: ")
         try:
             modelNumber = int(userInput)
             if modelNumber > maxModelNumber:
@@ -153,7 +157,7 @@ def getDifferentModelFileName(fileName):
     print("The chosen filename (" + fileName + ") for this model has already been used.")
     tmpFileName = fileName
     while tmpFileName == fileName:
-        tmpFileName = input("Please type another filename: ")
+        tmpFileName = raw_input("Please type another filename: ")
         if tmpFileName == fileName:
             print("This is the same filename as the chosen filename. Please type another.")
     return tmpFileName
@@ -173,7 +177,7 @@ def getRecordParameters():
                 print("\t" + str(i) + ": " + file)
                 i += 1
         print("\t" + str(i) + ": Create a new sound")
-        userInput = input("Which option do you want to choose? ")
+        userInput = raw_input("Which option do you want to choose? ")
         try:
             selectedOption = int(userInput)
             if selectedOption > 0:
@@ -195,7 +199,7 @@ def getRecordParameters():
         isNewSound = True
         isUserInputWrong = True
         while isUserInputWrong:
-            recordName = input("Which name should your sound have? ")
+            recordName = raw_input("Which name should your sound have? ")
             isUserInputWrong = False
             for file in os.listdir(conf.RECORDS_DIR):
                 if file == recordName:
@@ -207,7 +211,7 @@ def getRecordParameters():
     isUserInputNotANumber = True
     recordDuration = 0
     while isUserInputNotANumber:
-        userInput = input("How many seconds should be captured? ")
+        userInput = raw_input("How many seconds should be captured? ")
         try:
             recordDuration = int(userInput)
             if recordDuration > 0:
@@ -221,7 +225,7 @@ def getRecordParameters():
         print("You created a new sound named " + recordName + " with a duration of " + str(recordDuration) + " seconds.")
     else:
         print("You selected " + recordName + " with a duration of " + str(recordDuration) + " seconds.")
-    userInput = input("Press enter to proceed or input anything to change your selection.")
+    userInput = raw_input("Press enter to proceed or input anything to change your selection.")
     if userInput != "":
         return getRecordParameters()
     recordName = conf.RECORDS_DIR + "/" + recordName
@@ -229,21 +233,44 @@ def getRecordParameters():
         os.mkdir(recordName)
     return (recordName, recordNumber, recordDuration)
 
+# define callback (2)
+def callback(in_data, frame_count, time_info, status):
+    global wf
+    global i
+
+    if (i+1) < len(wf):
+        data = wf[i] + wf[i+1]
+    elif i < len(wf):
+        data = wf[i]
+    else:
+        data = ""
+
+    i += 2
+    
+    return (data, pyaudio.paContinue)
+
 #returns an empty string if the audio data should be stored. 
 def wantToStoreRecord(frames):
-    time.sleep(.5)
+    global wf
+    global i
+
+    i = 0
+    wf = frames
+
     stream = p.open(format=conf.FORMAT,
                     channels=conf.CHANNELS,
                     rate=RATE,
-                    output=True)
-    outputFrames = np.empty(1024)
-    j = 0
-    for i in frames:
-        #outputFrames[j] = i
-        #j += 1
-        #if j == 1024:
-            #print("Ab in Buffer")
-        stream.write(i)
-        #    j = 0
-    #stream.write(np.asarray(frames))
-    return input("Press Enter to save that record or input anything for not saving it.")
+                    output=True,
+                    stream_callback=callback)
+    
+    # start the stream (4)
+    stream.start_stream()
+
+    # wait for stream to finish (5)
+    while stream.is_active():
+        time.sleep(0.1)
+
+    stream.stop_stream()
+    stream.close()
+    return raw_input("Press Enter to save that record or input anything for not saving it.")
+

@@ -17,7 +17,7 @@ def callback(in_data, frame_count, time_info, status):
     listen.listen(in_data)
     return (None, pyaudio.paContinue)
 
-def main()
+def main():
 
     # instantiate PyAudio
     p = pyaudio.PyAudio()
@@ -31,6 +31,9 @@ def main()
 
     # wait to prevent to capture the hitting of enter key
     time.sleep(.08)
+
+    # setup the listenC
+    listen.setup()
 
     # open audio stream with callback function
     stream = p.open(format=conf.FORMAT,

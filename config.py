@@ -2,7 +2,7 @@
 import pyaudio
 
 # Index of audio device
-DEVICE_INDEX = 0
+DEVICE_INDEX = 2
 
 # TODO
 CHUNK = 512

@@ -8,6 +8,7 @@ import time
 import random
 from features import mfcc
 import sys
+import pdb
 
 #own imports
 import config as conf
@@ -73,9 +74,9 @@ cpdef CUINT64_t compare(np.ndarray[CUINT32_t] in_array1, np.ndarray[CUINT32_t] i
 # similar frames
 
 
-cdef list minimalizeFeatures(list in_array, CUINT64_t tolerance):
+cdef list minimalizeFeatures(list in_array, CUINT64_t tolerance, int iteration):
     in_array = copy.deepcopy(in_array)
-    #print("Length in_array: " + str(len(in_array)))
+    #print(str(iteration) + "mF | Length in_array: " + str(len(in_array)))
     cdef list result = [in_array[0]]
     cdef int count = 1
     cdef np.ndarray[CUINT32_t] currentFeatureVector 
@@ -115,8 +116,6 @@ cpdef np.ndarray loadModels(bint tmp = False):
     return np.asarray(result)
 
 # merges two models
-
-
 cpdef void modelMergeNew(tuple data):
     cdef list in_array = data[0]
     cdef int minFrames = data[1]
@@ -130,20 +129,15 @@ cpdef void modelMergeNew(tuple data):
 
     #print(str(iteration) + " | process model that starts with " + str(in_array[0][0][0]))
     tolerance = calculateTolerance(in_array[0], minFrames, maxFrames, iteration)
-    #print(str(iteration) + " | Tolerance calculated")
+    print(str(iteration) + " | Tolerance calculated: " + str(tolerance))
     # if the tolerance is below 1
     if tolerance != 0:
-
-        for i in range(len(in_array)):
-            in_array[i] = minimalizeFeatures(in_array[i], tolerance)
-        #print(str(iteration) + " | Features minimalized")
-        tolerance *= conf.TOLERANCE_MULTIPLIER
         length = len(in_array)
+        for i in range(length):
+            in_array[i] = minimalizeFeatures(in_array[i], tolerance, iteration)
         result = in_array[0]
-    #    print("Length in_array: " + str(length))
         # counts on which position we are in a specific array
         counter = np.zeros(length, dtype=int)
-        # the result of this merging
     #    print("Length result: " + str(len(result)))
         # counts how many arrays influence the result frame
         counterResult = np.ones(len(result), dtype=int)
@@ -171,8 +165,6 @@ cpdef void modelMergeNew(tuple data):
         storeModel(model.Model(result, tolerance, name), True, iteration)
 
 # stores a model at the modelFolder or in tmp folder
-
-
 cpdef void storeModel(model, bint tmp=False, int iteration=0):
     cdef str fileName
     cdef str dirName
@@ -191,8 +183,6 @@ cpdef void storeModel(model, bint tmp=False, int iteration=0):
     outputFile.close()
 
 # Clears the ./tmp/ folder
-
-
 cpdef void clearTmpFolder():
     for file in os.listdir(conf.TMP_DIR):
         os.remove(conf.TMP_DIR + "/" + file)
@@ -201,9 +191,9 @@ cpdef void clearTmpFolder():
 # Calculates the tolerance for a model by the given first record
 cdef CUINT64_t calculateTolerance(list record, int minFrames, int maxFrames, int iteration):
     cdef CUINT64_t tolerance = conf.TOLERANCE
-    #print("Length record " + str(len(record)) + " | beginns with: " + str(record[0]))
-    cdef list first = minimalizeFeatures(record, tolerance)
-    #print("Length first" + str(len(first)))
+    # print(str(iteration) + " | Length record " + str(len(record)) + " | beginns with: " + str(record[0]))
+    cdef list first = minimalizeFeatures(record, tolerance, iteration)
+    # print(str(iteration) + " | Length first" + str(len(first)))
     cdef CUINT64_t change = 1000000000000
     cdef bint recalculate = True
     cdef bint switch
@@ -211,10 +201,12 @@ cdef CUINT64_t calculateTolerance(list record, int minFrames, int maxFrames, int
         switch = True
     elif len(first) > maxFrames:
         switch = False
+    else:
+        recalculate = False
     # calculate the tolerance for the given min and max frames
     while recalculate:
         if tolerance > 0:
-            #print(str(iteration) + " | Length: " + str(len(first)) + " | tolerance: " + str(tolerance))
+            # print(str(iteration) + " | Length: " + str(len(first)) + " | tolerance: " + str(tolerance))
             if len(first) < maxFrames:
                 if len(first) < minFrames:
                     if switch == False:
@@ -228,7 +220,7 @@ cdef CUINT64_t calculateTolerance(list record, int minFrames, int maxFrames, int
                     while change > tolerance:
                         change /= 10
                     tolerance -= change
-                    first = minimalizeFeatures(record, tolerance)
+                    first = minimalizeFeatures(record, tolerance, iteration)
                 else:
                     recalculate = False
             else:
@@ -241,7 +233,7 @@ cdef CUINT64_t calculateTolerance(list record, int minFrames, int maxFrames, int
                         #debugCalculateTolerance(record, tolerance, iteration)
                         return 0
                 tolerance += change
-                first = minimalizeFeatures(record, tolerance)
+                first = minimalizeFeatures(record, tolerance, iteration)
         else:
             print("Error, tolerance < 0")
             return 0
@@ -251,16 +243,17 @@ cdef CUINT64_t calculateTolerance(list record, int minFrames, int maxFrames, int
 cpdef np.ndarray[CUINT32_t] process(np.ndarray[CINT16_t] frame):
     
     # TODO baue das generisch
-    cdef int rate = 44100
-    cdef np.ndarray tmp = mfcc(frame, rate)
+    #cdef int rate = 44100
+    cdef np.ndarray tmp = rfft(frame)
     #tmp = np.abs(tmp)
-    #tmp = np.uint32(tmp)
+    # needed for rfft
+    tmp = np.uint32(tmp)
     return tmp
     #np.split(np.uint64(np.abs(fft(frame))), 2)[0]
 
 cdef void debugCalculateTolerance(list record, CUINT64_t tolerance, int iteration):
     file = open("debug/calculateTolerance" + str(iteration), "w")
-    cdef list first = minimalizeFeatures(record, tolerance)
+    cdef list first = minimalizeFeatures(record, tolerance, iteration)
     file.write("Length record: " + str(len(record)) + " | Length minimalized: " + str(len(first)))
     file.write("\n")
     for i in range(len(record) - 1):

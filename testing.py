@@ -1,10 +1,19 @@
 import pyaudio
 import wave
 import sys
+import config as conf
+
+
+def callback(in_data, frame_count, time_info, status):
+    data = None
+    return (data, pyaudio.paContinue)
+
+p = pyaudio.PyAudio()
+RATE = int(p.get_device_info_by_index(conf.DEVICE_INDEX)['defaultSampleRate'])
 
 CHUNK = 1024
 
-p = pyaudio.PyAudio()
+
 
 
 wf = wave.open("records/asd/1.wav")
@@ -13,18 +22,15 @@ wf = wave.open("records/asd/1.wav")
 p = pyaudio.PyAudio()
 
 # open stream (2)
-stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                channels=wf.getnchannels(),
-                rate=wf.getframerate(),
-                output=True)
+stream = p.open(format=conf.FORMAT,
+                channels=conf.CHANNELS,
+                rate=RATE,
+                input=True,
+                frames_per_buffer=conf.CHUNK,
+                stream_callback=callback,
+                input_device_index=conf.DEVICE_INDEX)
 
-# read data
-data = wf.readframes(CHUNK)
-
-# play stream (3)
-while len(data) > 0:
-    stream.write(data)
-    data = wf.readframes(CHUNK)
+stream.start_stream()
 
 # stop stream (4)
 stream.stop_stream()

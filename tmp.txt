@@ -1,0 +1,1 @@
+http://stackoverflow.com/questions/29088307/compile-pyaudio-without-jack-without-pulseaudio-etc
