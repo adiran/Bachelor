@@ -14,8 +14,8 @@ import numpy as np
 import multiprocessing
 import copy
 import gc
-from memory_profiler import profile
-from guppy import hpy
+#from memory_profiler import profile
+#from guppy import hpy
 import pdb
 
 from scipy.fftpack import fft
@@ -71,7 +71,7 @@ def preprocess(wf, fileName, wavenumber):
                     frame = np.append(
                         frame, np.fromstring(framesAsString, np.int16))
                     #print("Length frame: " + str(len(frame)))
-                    number.append(f.process(frame))
+                    number.append(f.extractFeatures(f.process(frame)))
                     switch = True
             del framesAsString
 
@@ -94,7 +94,7 @@ def main():
     model = []
     wavenumber = 1
     # TODO just for testing. recordsName as method argument needed
-    fileName, modelName, minFrames, maxFrames, iterations = interactions.getTrainParameters()
+    fileName, modelName, minFrames, maxFrames, optimalFrames, iterations = interactions.getTrainParameters()
     
     # do it while there are wave files
     
@@ -105,8 +105,10 @@ def main():
         wf.close()
         wavenumber += 1
 
-        
-    
+    if conf.ELIMINATE_BACKGROUND_NOISE:
+        # TODO: bilde den durchschnitt der Hintergrundfrequenzen und ziehe diese von jeder aufnahme ab. Da fft sollten damit ja die Hintergrundfrequenzen ausgeloescht werden    
+        print()
+
     print("Processed files, free up memory.")
 
 
@@ -149,6 +151,7 @@ def main():
                 (copy.deepcopy(model),
                  minFrames,
                  maxFrames,
+                 optimalFrames,
                  modelName,
                  i))
 
@@ -171,24 +174,37 @@ def main():
                 f.modelMergeNew(i)
 
 #        result.get()
-
+        print()
+        print("Computed the models in " + str(time.time() - beginning) + " seconds. Load them for scoring. Don't worry this might take some time...")
+        print()
+        beginning = time.time()
         models = f.loadModels(tmp=True)
-        print("Computed " + str(len(models)) +
-              " models in " + str(time.time() - beginning) + "... Compute their score.")
-
+        print("Loaded " + str(len(models)) +
+              " models in " + str(time.time() - beginning) + " seconds. Compute their score.")
+        print()
+        beginning = time.time()
         for i in range(len(models)):
             #print("Length extractedFeatures: " + str(len(models[i].extractedFeatures[0])))
-            models[i].score = q.qualityCheck(models[i], fileName, i)
+            models[i].matches = q.qualityCheck(models[i], fileName, i)
+            models[i].score = 0
+        print("Computed the scores in " + str(time.time() - beginning) + " seconds.")
+        print()
+        for i in range(len(models)):
+            #print("Length extractedFeatures: " + str(len(models[i].extractedFeatures[0])))
             #print("Type Features: " + str(type(models[i].features[0])) + " | Type FeatureValue: " + str(type(models[i].features[0][0])))
-            print("Model Nr: " +
+            print("Model Nr:\t" +
                   str(i +
                       1) +
-                  " | Frames: " +
+                  " | Frames:\t" +
                   str(len(models[i].features)) +
-                  " | Score: " +
-                  str(models[i].score) +
-                  " | Tolerance: " +
-                  str(models[i].tolerance))
+                  " | Matches:\t" +
+                  str(models[i].matches) +
+                  " | Influenced by:\t" +
+                  str(models[i].influencedBy) +
+                  " | Tolerance:\t" +
+                  str(models[i].tolerance) +
+                  " | Score:\t" +
+                  str(models[i].score))
 
         # get the model number and substract 1 because list indexing starts
         # with 0

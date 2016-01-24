@@ -6,7 +6,7 @@ import os
 import pickle
 import time
 import random
-from features import mfcc
+#from features import mfcc
 import sys
 import pdb
 
@@ -53,9 +53,9 @@ cpdef CUINT64_t compare(np.ndarray[CUINT32_t] in_array1, np.ndarray[CUINT32_t] i
     cdef CUINT64_t tmp2
     if len(in_array1) == len(in_array2):
         for i in range(len(in_array1)):
-            tmp1 = <CUINT64_t>abs(in_array1[i] * in_array1[i])
+            tmp1 = <CUINT64_t>abs(in_array1[i])# * in_array1[i])
             #print("Test1 " + str(in_array1[i]) + " | " + str(in_array2[i]))
-            tmp2 = <CUINT64_t>abs(in_array2[i] * in_array2[i])
+            tmp2 = <CUINT64_t>abs(in_array2[i])# * in_array2[i])
             #print("Test2 " + str(result) + " | " + str(abs(tmp1 - tmp2)) + " | " + str(result + abs(tmp1 - tmp2)))
             if tmp1 > tmp2:
                 #print("Test2 " + str(result) + " | " + str(abs(tmp1 - tmp2)) + " | " + str(result + abs(tmp1 - tmp2)))
@@ -70,18 +70,103 @@ cpdef CUINT64_t compare(np.ndarray[CUINT32_t] in_array1, np.ndarray[CUINT32_t] i
     return result
 
 
+cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int iteration):
+    in_array = copy.deepcopy(in_array)
+    #print(str(iteration) + "mF | Length in_array: " + str(len(in_array)))
+    cdef list diffrences = []
+    cdef list result = []
+    cdef CUINT64_t minDiffrence
+    cdef CUINT64_t maxDiffrence = 0
+    cdef int pos
+    cdef Py_ssize_t i
+    while len(in_array) > optimalFrames:
+        #print("Length in_array: " + str(len(in_array)) + " | optimalFrames: " + str(optimalFrames))
+        diffrences = []
+        result = []
+        for i in range(len(in_array) - 1):
+            diffrences.append(compare(in_array[i], in_array[i+1]))
+        minDiffrence = diffrences[0]
+        pos = 0
+        for i in range(len(diffrences)):
+            if diffrences[i] < minDiffrence:
+                pos = i
+                minDiffrence = diffrences[i]
+        for i in range(len(in_array) - 1):
+            if i == pos:
+                if minDiffrence > maxDiffrence:
+                    maxDiffrence = minDiffrence
+                tmp = in_array[i]
+                for j in range(tmp.size):
+                    tmp[j] = (tmp[j] + in_array[i+1][j])/2
+                result.append(copy.deepcopy(tmp))
+                i += 1
+            else:
+                result.append(in_array[i])
+        in_array = copy.deepcopy(result)
+    #print("MF maxDiffrence: " + str(maxDiffrence))
+    return (result, maxDiffrence)
+
+
 # minimalizes the features by comparing. Builds the average over all
 # similar frames
-
-
 cdef list minimalizeFeatures(list in_array, CUINT64_t tolerance, int iteration):
+    in_array = copy.deepcopy(in_array)
+    #print(str(iteration) + "mF | Length in_array: " + str(len(in_array)))
+    cdef list diffrences = []
+    cdef list result = []
+    cdef CUINT64_t minDiffrence
+    cdef int pos
+    cdef bint recalculate = True
+    cdef Py_ssize_t i
+    while recalculate:
+        #print("Length in_array: " + str(len(in_array)) + " | optimalFrames: " + str(optimalFrames))
+        diffrences = []
+        
+        #print(str(iteration) + "mF 1")
+        for i in range(len(in_array) - 1):
+            diffrences.append(compare(in_array[i], in_array[i+1]))
+        #print(str(iteration) + "mF 1.5")
+        if len(diffrences) > 0:
+            minDiffrence = diffrences[0]
+        else:
+            break
+        pos = 0
+        result = []
+        #print(str(iteration) + "mF 2")
+        for i in range(len(diffrences)):
+            if diffrences[i] < minDiffrence:
+                pos = i
+                minDiffrence = diffrences[i]
+        #print(str(iteration) + "mF 3")
+
+        if minDiffrence > tolerance:
+            recalculate = False
+            break
+        #print(str(iteration) + "mF 4")
+        for i in range(len(in_array) - 1):
+            if i == pos:
+                tmp = in_array[i]
+                for j in range(tmp.size):
+                    tmp[j] = (tmp[j] + in_array[i+1][j])/2
+                result.append(copy.deepcopy(tmp))
+                i += 1
+            else:
+                result.append(in_array[i])
+        in_array = copy.deepcopy(result)
+    #print("Length : " + str(len(result)))
+    return (result)
+
+
+
+# minimalizes the features by comparing. Builds the average over all
+# similar frames
+cdef list minimalizeFeaturesOld(list in_array, CUINT64_t tolerance, int iteration):
     in_array = copy.deepcopy(in_array)
     #print(str(iteration) + "mF | Length in_array: " + str(len(in_array)))
     cdef list result = [in_array[0]]
     cdef int count = 1
     cdef np.ndarray[CUINT32_t] currentFeatureVector 
     cdef Py_ssize_t i
-    tolerance = tolerance * conf.TOLERANCE_MULTIPLIER
     for i in range(len(in_array) - 1):
         currentFeatureVector = result.pop()
         #print("Compare(): " + str(compare(np.asarray([(x / count) for x in currentFeatureVector], dtype = np.uint64), in_array[i + 1]) / 10000000000) + " | tolerance: " + str(tolerance / 10000000000))
@@ -118,24 +203,82 @@ cpdef np.ndarray loadModels(bint tmp = False):
 # merges two models
 cpdef void modelMergeNew(tuple data):
     cdef list in_array = data[0]
+    cdef list minimalizedRecords = []
     cdef int minFrames = data[1]
     cdef int maxFrames = data[2]
-    cdef str name = data[3]
-    cdef int iteration = data[4]
+    cdef int optimalFrames = data[3]
+    cdef str name = data[4]
+    cdef int iteration = data[5]
+    cdef list result
+    cdef CUINT64_t tolerance
+    cdef Py_ssize_t i
+    cdef Py_ssize_t pos
+    cdef Py_ssize_t j
+    #print(str(iteration) + " | process model that starts with " + str(in_array[0][0][0]))
+    in_array[0], tolerance = minimalizeAndCalcTolerance(in_array[0], optimalFrames, iteration)
+    #print(str(iteration) + " | Tolerance calculated: " + str(tolerance))
+    # if the tolerance is below 1
+    if tolerance != 0:
+        length = len(in_array)
+        #print(str(iteration) + " | length: " + str(length))
+        for i in range(1, length):
+            tmp = minimalizeFeatures(in_array[i], tolerance, i)
+            #print(str(iteration) + " | i: " + str(i))
+            if len(tmp) > 0:
+                minimalizedRecords.append(tmp)
+        length = len(minimalizedRecords)
+        result = copy.deepcopy(in_array[0])
+        # counts on which position we are in a specific array
+        counter = np.zeros(length, dtype=int)
+    #    print("Length result: " + str(len(result)))
+        # counts how many arrays influence the result frame
+        counterResult = np.ones(len(result), dtype=int)
+        # for every frame in result try if we find mergable frames
+        for pos in range(len(result)):
+            # we try all recordings
+            for i in range(length):
+                # we only try frames after the last merged frame from this
+                # recording
+                for j in range(counter[i], len(minimalizedRecords[i])):
+                    # if the average over all merged frames compared to the current
+                    # frame of the current model is under tolerance we merge the
+                    # current frame to the others
+                    if compare(np.asarray(in_array[0][pos], dtype=np.uint32), minimalizedRecords[i][j]) < tolerance:
+                        result[pos] = np.add(result[pos], in_array[i + 1][j])
+                        counterResult[pos] += 1
+                        counter[i] = j
+        #print(str(iteration) + " | Sum calculated")
+        # calculate the average from the stored sum
+        for pos in range(len(result)):
+            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.uint32)
+        #print(str(iteration) + " | Average calculated")
+        tolerance /= conf.TOLERANCE_MULTIPLIER
+        print("Merged iteration " + str(iteration) + ", with " + str(length) + " records | Tolerance: " + str(tolerance))
+        storeModel(model.Model(result, tolerance, name, length), True, iteration)
+
+
+# merges two models
+cpdef void modelMergeNewOld(tuple data):
+    cdef list in_array = data[0]
+    cdef int minFrames = data[1]
+    cdef int maxFrames = data[2]
+    cdef int optimalFrames = data[3]
+    cdef str name = data[4]
+    cdef int iteration = data[5]
     cdef list result
     cdef Py_ssize_t i
     cdef Py_ssize_t pos
     cdef Py_ssize_t j
 
     #print(str(iteration) + " | process model that starts with " + str(in_array[0][0][0]))
-    tolerance = calculateTolerance(in_array[0], minFrames, maxFrames, iteration)
-    print(str(iteration) + " | Tolerance calculated: " + str(tolerance))
+    tolerance = calculateTolerance(in_array[0], minFrames, maxFrames, optimalFrames, iteration)
+    #print(str(iteration) + " | Tolerance calculated: " + str(tolerance))
     # if the tolerance is below 1
     if tolerance != 0:
         length = len(in_array)
         for i in range(length):
             in_array[i] = minimalizeFeatures(in_array[i], tolerance, iteration)
-        result = in_array[0]
+        result = copy.deepcopy(in_array[0])
         # counts on which position we are in a specific array
         counter = np.zeros(length, dtype=int)
     #    print("Length result: " + str(len(result)))
@@ -151,7 +294,7 @@ cpdef void modelMergeNew(tuple data):
                     # if the average over all merged frames compared to the current
                     # frame of the current model is under tolerance we merge the
                     # current frame to the others
-                    if compare(np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.uint32), in_array[i + 1][j]) < tolerance:
+                    if compare(np.asarray(in_array[0][pos], dtype=np.uint32), in_array[i + 1][j]) < tolerance:
                         result[pos] = np.add(result[pos], in_array[i + 1][j])
                         counterResult[pos] += 1
                         counter[i + 1] = j
@@ -189,7 +332,77 @@ cpdef void clearTmpFolder():
 
 
 # Calculates the tolerance for a model by the given first record
-cdef CUINT64_t calculateTolerance(list record, int minFrames, int maxFrames, int iteration):
+cpdef CUINT64_t calculateTolerance(list record, int minFrames, int maxFrames, optimalFrames, int iteration):
+    cdef CUINT64_t tolerance = conf.TOLERANCE
+    cdef CUINT64_t tmpTolerance = 0
+    # print(str(iteration) + " | Length record " + str(len(record)) + " | beginns with: " + str(record[0]))
+    cdef list first = minimalizeFeatures(record, tolerance, iteration)
+    # print(str(iteration) + " | Length first" + str(len(first)))
+    cdef CUINT64_t change = 1000000000000
+    cdef bint wasOptimalLastTime = False
+    cdef bint greaterOptimum = True
+    if len(first) < optimalFrames:
+        greaterOptimum = False
+    # calculate the tolerance for the given min and max frames
+    while True:
+        if len(first) > optimalFrames:
+            if wasOptimalLastTime:
+                if change > 1:
+                    change /= 10
+                    tolerance += change
+                    greaterOptimum = True
+                    wasOptimalLastTime = False
+                else:
+                    return tmpTolerance
+            elif greaterOptimum == False:
+                if change > 1:
+                    change /= 10
+                    tolerance += change
+                    greaterOptimum = True
+                else:
+                    if len(first) > maxFrames:
+                        print("Error, its not possible to get the length of this model fit in the borders.")
+                        return 0
+                    else:
+                        print("Error, its not possible to get the length of this model to the optimum of " + str(optimalFrames) + ".")
+                        print("Length of model: " + str(len(first)))
+                        return tolerance
+            else:
+                tolerance += change
+        elif len(first) < optimalFrames:
+            if wasOptimalLastTime:
+                if change > 1:
+                    change /= 10
+                    tolerance -= change
+                    greaterOptimum = True
+                    wasOptimalLastTime = False
+                else:
+                    return tmpTolerance
+            elif greaterOptimum:
+                if change > 1:
+                    change /= 10
+                    tolerance -= change
+                    greaterOptimum = False
+                else:
+                    if len(first) < minFrames:
+                        print("Error, its not possible to get the length of this model fit in the borders.")
+                        return 0
+                    else:
+                        print("Error, its not possible to get the length of this model to the optimum of " + str(optimalFrames) + ".")
+                        print("Length of model: " + str(len(first)))
+                        return tolerance
+            else:
+                tolerance -= change
+        else:
+            tmpTolerance = tolerance
+            tolerance += change
+            wasOptimalLastTime = True
+        first = minimalizeFeatures(record, tolerance, iteration)
+
+
+
+# Calculates the tolerance for a model by the given first record
+cdef CUINT64_t calculateToleranceOld(list record, int minFrames, int maxFrames, optimalFrames, int iteration):
     cdef CUINT64_t tolerance = conf.TOLERANCE
     # print(str(iteration) + " | Length record " + str(len(record)) + " | beginns with: " + str(record[0]))
     cdef list first = minimalizeFeatures(record, tolerance, iteration)

@@ -66,7 +66,7 @@ def getTrainParameters():
     isUserInputNotANumber = True
     while isUserInputNotANumber:
         userInput = raw_input(
-            "Input number of frames or nothing for minimum (" + str(minFrames) + ")?")
+            "Input number of frames or nothing for minimum (" + str(minFrames) + "): ")
         if userInput != "":
             try:
                 tmpMinFrames = int(userInput)
@@ -87,7 +87,7 @@ def getTrainParameters():
     isUserInputNotANumber = True
     while isUserInputNotANumber:
         userInput = raw_input(
-            "Input number of frames or nothing for standard (" + str(maxFrames) + ")?")
+            "Input number of frames or nothing for standard (" + str(maxFrames) + "): ")
         if userInput != "":
             try:
                 tmpMaxFrames = int(userInput)
@@ -103,6 +103,29 @@ def getTrainParameters():
                 print("That was not a number.")
         else:
             isUserInputNotANumber = False
+
+    print()
+    print(
+        "How many frames should this model at optimum have?")
+    isUserInputNotANumber = True
+    while isUserInputNotANumber:
+        userInput = raw_input(
+            "Input number of frames: ")
+        if userInput != "":
+            try:
+                optimalFrames = int(userInput)
+                if optimalFrames >= minFrames:
+                    if optimalFrames <= maxFrames:
+                        isUserInputNotANumber = False
+                    else:
+                        print("Number of frames should be smaller or equal than the maximum of " + str(maxFrames) + ".")
+                else:
+                    print(
+                        "Number of frames should be greater or equal than the minimum of " +
+                        str(minFrames) +
+                        ".")
+            except ValueError:
+                print("That was not a number.")
 
     print()
     print("How many models should be computed and compaired? Maximum is " +
@@ -133,7 +156,7 @@ def getTrainParameters():
         else:
             isUserInputNotANumber = False
 
-    return(fileName, modelName, minFrames, maxFrames, iterations)
+    return(fileName, modelName, minFrames, maxFrames, optimalFrames, iterations)
 
 
 def getModelNumber(maxModelNumber):

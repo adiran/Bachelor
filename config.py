@@ -30,7 +30,7 @@ TOLERANCE_MULTIPLIER = 1
 
 # how many frames without a match are allowed before we assume we are not
 # in a model
-FRAME_COUNT = 10
+FRAME_COUNT = 3
 
 # counter for waveoutput in multiple files. first file will get this number
 WAVENUMBER = 1
@@ -50,3 +50,6 @@ TMP_DIR = "tmp"
 
 # standard minimum number of frames per model. Should be greater 2 or the qualitycheck will fail TODO fix that
 MIN_FRAMES = 3
+
+# if set to True we try to eliminate background noise
+ELIMINATE_BACKGROUND_NOISE = True

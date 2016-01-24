@@ -11,13 +11,16 @@ class Model(object):
     _extractedFeatures = None
     _tolerance = None
     _name = None
-    _score = -1
+    _score = -1.0
+    _matches = -1
+    _influencedBy = 0
 
-    def __init__(self, features, tolerance, name):
+    def __init__(self, features, tolerance, name, influencedBy):
         self.features = features
         self.extractedFeatures = copy.deepcopy(features)
         self.tolerance = tolerance
         self.name = name
+        self.influencedBy = influencedBy
 
 
     @property
@@ -36,6 +39,14 @@ class Model(object):
     def name(self):
         return copy.deepcopy(self._name)
     
+    @property
+    def matches(self):
+        return copy.deepcopy(self._matches)
+
+    @property
+    def influencedBy(self):
+        return copy.deepcopy(self._influencedBy)
+
     @property
     def score(self):
         return copy.deepcopy(self._score)
@@ -62,7 +73,16 @@ class Model(object):
         if self._name == None:
             self._name = name
 
+    @matches.setter
+    def matches(self, matches):
+        if self._matches < 0:
+            self._matches = matches
+
+    @influencedBy.setter
+    def influencedBy(self, influencedBy):
+        self._influencedBy = influencedBy
+
     @score.setter
-    def score(self, score):
-        if self._score < 0:
-            self._score = score
+    def score(self, integer):
+        if self._matches >= 0:
+            self._score = float((float(self._matches) * float(self._influencedBy) * 10000000000) / float(self._tolerance))
