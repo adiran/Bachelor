@@ -77,7 +77,6 @@ def main():
         
 
         wf = wave.open("tmp/tmp.wav", "wb")
-        recordNumber = recordNumber + 1
         wf.setnchannels(conf.CHANNELS)
         wf.setsampwidth(p.get_sample_size(conf.FORMAT))
         wf.setframerate(RATE)

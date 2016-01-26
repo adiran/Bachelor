@@ -59,11 +59,11 @@ def qualityCheck(tuple data):
                     
                     feature = f.process(frame)
                     compared = f.compare(features[modelPosition], feature)
-                    #print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance - compared))
+                    print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance - compared))
                     if compared < tolerance:
                         recognized = True
                         frameCount = conf.FRAME_COUNT
-                        #print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
+                        print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
                     # if we are not in the same frame of the model as last
                     # time we check if we are in the next frame
                     elif recognized:
@@ -73,7 +73,7 @@ def qualityCheck(tuple data):
                             recognized = True
                             frameCount = conf.FRAME_COUNT
                             modelPosition += 1
-                            #print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
+                            print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
                             # recognized last frame of the features. Print it
                             # and reset featuresNumber and modelPosition
                             if modelPosition == (len(features) - 1):

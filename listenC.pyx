@@ -82,7 +82,7 @@ cpdef listen(in_data):
                 # if f.compare is < conf.TOLERANCE then we have a match and set
                 # modelNumber
                 compared = f.compare(models[i].features[0], data)
-                print(str(compared) + " - " + str(models[i].tolerance) + " = " + str(compared - models[i].tolerance))
+                #print(str(compared) + " - " + str(models[i].tolerance) + " = " + str(compared - models[i].tolerance))
                 if compared < models[i].tolerance:
                     print("recognized the first frame")
                     modelNumber = i
@@ -93,7 +93,7 @@ cpdef listen(in_data):
             global modelPosition
             # if we are not in the same frame of the model as last time we
             # check if we are in the next frame
-            if f.compare(models[modelNumber].features[modelPosition], data) > models[modelNumber].tolerance:
+            if f.compare(models[modelNumber].features[modelPosition], data) < models[modelNumber].tolerance:
                 frameCount = conf.FRAME_COUNT
             else:
                 # maby we are in the next model frame
@@ -115,7 +115,7 @@ cpdef listen(in_data):
                     # reset
                     if frameCount > 0:
                         frameCount -= 1
-                        print("Framecount: " + str(frameCount))
+                        #print("Framecount: " + str(frameCount))
                     else:
                         modelNumber = -1
                         modelPosition = 0
