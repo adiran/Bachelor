@@ -44,35 +44,37 @@ def preprocess(wf, fileName, wavenumber):
         for i in range(loops):
             
             framesAsString = wf.readframes(512)
-            audioLevel = math.sqrt(
-                abs(audioop.avg(framesAsString, 4)))
+            #audioLevel = math.sqrt(
+             #   abs(audioop.avg(framesAsString, 4)))
             #print("AudioLevel of these frames: " + str(audioLevel) + " | THRESHOLD: " + str(conf.THRESHOLD))
-            framesSwitch = True
+            #framesSwitch = True
             # if audio level is under conf.THRESHOLD but we had sound in the frames before we capture a few frames more to prevent single missing frames
             # first we check the audio level because framesAfterSound > 0
             # occures way more than aduioLevel <= conf.THRESHOLD
-            if audioLevel <= conf.THRESHOLD:
-                if framesAfterSound > 0:
-                    audioLevel = conf.THRESHOLD + 1
-                    framesAfterSound -= 1
-                    framesSwitch = False
+            #if audioLevel <= conf.THRESHO         
+        #if framesAfterSound > 0:
+         #   audioLevel = conf.THRESHOLD + 1
+          #  framesAfterSound -= 1
+           # framesSwitch = False
             # the whole preprocessing
-            if audioLevel > conf.THRESHOLD:
-                # if framesAfterSound has been decrement but audio level rised over conf.THRESHOLD again we reset framesAfterSound
-                # first we check if we decreased framesAfterSound because
-                # framesSwitch is True by default
-                if framesAfterSound < conf.FRAMES_AFTER_SOUND:
-                    if framesSwitch:
-                        framesAfterSound = conf.FRAMES_AFTER_SOUND
-                if switch:
-                    frame = np.fromstring(framesAsString, np.int16)
-                    switch = False
-                else:
-                    frame = np.append(
-                        frame, np.fromstring(framesAsString, np.int16))
-                    #print("Length frame: " + str(len(frame)))
-                    number.append(f.extractFeatures(f.process(frame)))
-                    switch = True
+            #if audioLevel > conf.THRESHOLD:
+        # if framesAfterSound has been decrement but audio level rised over conf.THRESHOLD again we reset framesAfterSound
+        # first we check if we decreased framesAfterSound because
+        # framesSwitch is True by default
+        #if framesAfterSound < conf.FRAMES_AFTER_SOUND:
+         #   if framesSwitch:
+          #      framesAfterSound = conf.FRAMES_AFTER_SOUND
+            if switch:
+                frame = np.fromstring(framesAsString, np.int16)
+                switch = False
+            else:
+                frame = np.append(
+                    frame, np.fromstring(framesAsString, np.int16))
+                #print("1 Length frame: " + str(len(frame)) + " | frame[0]: " + str(frame[0]))
+                frame = f.process(frame)
+                #print("2 Length frame: " + str(len(frame)) + " | frame[0]: " + str(frame[0]))
+                number.append(frame)
+                switch = True
             del framesAsString
 
             # free memory
@@ -101,6 +103,7 @@ def main():
     while os.path.isfile(str(fileName) + "/" + str(wavenumber) + ".wav"):
         wf = wave.open(str(fileName) + "/" + str(wavenumber) + ".wav")
         number = preprocess(wf, fileName, wavenumber)
+        #print("Number[0][0]: " + str(number[0][0]))
         model.append(copy.deepcopy(number))
         wf.close()
         wavenumber += 1
@@ -183,10 +186,17 @@ def main():
               " models in " + str(time.time() - beginning) + " seconds. Compute their score.")
         print()
         beginning = time.time()
+        data = []
         for i in range(len(models)):
-            #print("Length extractedFeatures: " + str(len(models[i].extractedFeatures[0])))
-            models[i].matches = q.qualityCheck(models[i], fileName, i)
-            models[i].score = 0
+            data.append((models[i], fileName, i))
+        multipro = True
+        if multipro:
+            pool = multiprocessing.Pool(processes=4)
+            pool.map(q.qualityCheck, data)
+        else:
+            for i in data:
+                q.qualityCheck(i)
+        models = f.loadModels(tmp=True)
         print("Computed the scores in " + str(time.time() - beginning) + " seconds.")
         print()
         for i in range(len(models)):

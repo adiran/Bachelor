@@ -16,8 +16,8 @@ CUINT64 = np.uint64
 ctypedef np.uint64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
-CUINT32 = np.uint32
-ctypedef np.uint32_t CUINT32_t
+CUINT64 = np.uint64
+ctypedef np.uint64_t CUINT64_t
 
 #global variables see setup() for more information
 #models
@@ -62,11 +62,10 @@ cpdef setup():
     frame = []    
 
 cpdef listen(in_data):
-    cdef np.ndarray[CUINT32_t] data
+    cdef np.ndarray[CUINT64_t] data
 
     global switch
     global frame
-#    print(status)
 
     # capturing the first half of the frame
     if switch:
@@ -82,20 +81,18 @@ cpdef listen(in_data):
 #        print("frame = np.append(frame, np.fromstring(in_data, np.int16))")
         frame = np.append(frame, np.fromstring(in_data, np.int16))
 #        print("data = np.abs(np.split(fft(frame), 2))")
-        data = np.uint32(np.abs(rfft(frame)))
+        data = f.process(frame)
 #        print("number.append(f.extractFeatures(data[0]))")
-        feature = (f.extractFeatures(data))
-
         # if modelNumber < 0 then we don't recognized a model in the frame
         # before
         if modelNumber < 0:
-            #            print("we are in the first check")
+            #print("we are in the first check")
             for i in range(len(models)):
                 #                print("testing model %d" %(i))
                 # if f.compare is < conf.TOLERANCE then we have a match and set
                 # modelNumber
-                compared = f.compare(models[i].extractedFeatures[0], feature)
-                #print(str(compared) + " - " + str(models[i].tolerance) + " = " + str(compared - models[i].tolerance))
+                compared = f.compare(models[i].features[0], data)
+                print(str(compared) + " - " + str(models[i].tolerance) + " = " + str(compared - models[i].tolerance))
                 if compared < models[i].tolerance:
                     print("recognized the first frame")
                     modelNumber = i
@@ -106,16 +103,18 @@ cpdef listen(in_data):
             global modelPosition
             # if we are not in the same frame of the model as last time we
             # check if we are in the next frame
-            if f.compare(models[modelNumber].extractedFeatures[modelPosition], feature) > models[modelNumber].tolerance:
+            if f.compare(models[modelNumber].features[modelPosition], data) > models[modelNumber].tolerance:
+                frameCount = conf.FRAME_COUNT
+            else:
                 # maby we are in the next model frame
-                if f.compare(models[modelNumber].extractedFeatures[modelPosition + 1], feature) < models[modelNumber].tolerance:
+                if f.compare(models[modelNumber].features[modelPosition + 1], data) < models[modelNumber].tolerance:
                     modelPosition += 1
                     frameCount = conf.FRAME_COUNT
                     print("recognized the %d frame. frameCount = %d" %
                           (modelPosition + 1, frameCount))
                     # recognized last frame of the model. Print it and reset
                     # modelNumber and modelPosition
-                    if modelPosition == (len(models[modelNumber].extractedFeatures) - 1):
+                    if modelPosition == (len(models[modelNumber].features) - 1):
                         print("Recognized model number %d" % (modelNumber))
                         modelNumber = -1
                         modelPosition = 0

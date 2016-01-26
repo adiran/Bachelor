@@ -69,7 +69,7 @@ def preprocess(wf, fileName, wavenumber):
                     frame = np.append(
                         frame, np.fromstring(framesAsString, np.int16))
                     #print("Length frame: " + str(len(frame)))
-                    number.append(f.extractFeatures(f.process(frame)))
+                    number.append(f.process(frame))
                     switch = True
             del framesAsString
 

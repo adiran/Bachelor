@@ -23,15 +23,15 @@ CUINT64 = np.uint64
 ctypedef np.uint64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
-CUINT32 = np.uint32
-ctypedef np.uint32_t CUINT32_t
+CUINT64 = np.uint64
+ctypedef np.uint64_t CUINT64_t
 
-cpdef np.ndarray[CUINT32_t] extractFeatures(np.ndarray[CUINT32_t] in_array):
+cdef np.ndarray[CUINT64_t] extractFeatures(np.ndarray[CUINT64_t] in_array):
     cdef Py_ssize_t i
-    cdef np.ndarray[CUINT32_t] result = np.zeros(64, dtype=np.uint32)
-    cdef CUINT32_t j = 0
-    cdef CUINT32_t k = 0
-    cdef CUINT32_t h = 0
+    cdef np.ndarray[CUINT64_t] result = np.zeros(64, dtype=np.uint64)
+    cdef CUINT64_t j = 0
+    cdef CUINT64_t k = 0
+    cdef CUINT64_t h = 0
     #print("length in_array: " + str(len(in_array)) + " | length result: " + str(len(result)))
     for i in in_array:
         result[j] += i
@@ -46,7 +46,7 @@ cpdef np.ndarray[CUINT32_t] extractFeatures(np.ndarray[CUINT32_t] in_array):
 # summe der quadrate der distanzen zweier int arrays
 
 
-cpdef CUINT64_t compare(np.ndarray[CUINT32_t] in_array1, np.ndarray[CUINT32_t] in_array2):
+cpdef CUINT64_t compare(np.ndarray[CUINT64_t] in_array1, np.ndarray[CUINT64_t] in_array2):
     cdef CUINT64_t result = 0
     cdef Py_ssize_t i
     cdef CUINT64_t tmp1
@@ -80,7 +80,7 @@ cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int ite
     cdef int pos
     cdef Py_ssize_t i
     while len(in_array) > optimalFrames:
-        #print("Length in_array: " + str(len(in_array)) + " | optimalFrames: " + str(optimalFrames))
+        #print(str(iteration) + "mF | Length in_array: " + str(len(in_array)) + " | optimalFrames: " + str(optimalFrames))
         diffrences = []
         result = []
         for i in range(len(in_array) - 1):
@@ -88,6 +88,7 @@ cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int ite
         minDiffrence = diffrences[0]
         pos = 0
         for i in range(len(diffrences)):
+            #print(str(iteration) + "mF | maxDiffrence: " + str(diffrences[i]))
             if diffrences[i] < minDiffrence:
                 pos = i
                 minDiffrence = diffrences[i]
@@ -103,7 +104,7 @@ cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int ite
             else:
                 result.append(in_array[i])
         in_array = copy.deepcopy(result)
-    #print("MF maxDiffrence: " + str(maxDiffrence))
+    #print(str(iteration) + "mF | maxDiffrence: " + str(maxDiffrence))
     return (result, maxDiffrence)
 
 
@@ -165,24 +166,24 @@ cdef list minimalizeFeaturesOld(list in_array, CUINT64_t tolerance, int iteratio
     #print(str(iteration) + "mF | Length in_array: " + str(len(in_array)))
     cdef list result = [in_array[0]]
     cdef int count = 1
-    cdef np.ndarray[CUINT32_t] currentFeatureVector 
+    cdef np.ndarray[CUINT64_t] currentFeatureVector 
     cdef Py_ssize_t i
     for i in range(len(in_array) - 1):
         currentFeatureVector = result.pop()
         #print("Compare(): " + str(compare(np.asarray([(x / count) for x in currentFeatureVector], dtype = np.uint64), in_array[i + 1]) / 10000000000) + " | tolerance: " + str(tolerance / 10000000000))
-        if compare(np.asarray([(x / count) for x in currentFeatureVector], dtype = np.uint32),
+        if compare(np.asarray([(x / count) for x in currentFeatureVector], dtype = np.uint64),
                    in_array[i + 1]) < tolerance:
             currentFeatureVector = np.add(
                 currentFeatureVector, in_array[i + 1])
             result.append(currentFeatureVector)
             count += 1
         else:
-            currentFeatureVector = np.asarray([x / count for x in currentFeatureVector], dtype = np.uint32)
+            currentFeatureVector = np.asarray([x / count for x in currentFeatureVector], dtype = np.uint64)
             result.append(currentFeatureVector)
             result.append(in_array[i + 1])
             count = 1
     currentFeatureVector = result.pop()
-    currentFeatureVector = np.asarray([x / count for x in currentFeatureVector], dtype = np.uint32)
+    currentFeatureVector = np.asarray([x / count for x in currentFeatureVector], dtype = np.uint64)
     result.append(currentFeatureVector)
     return result
 
@@ -195,9 +196,10 @@ cpdef np.ndarray loadModels(bint tmp = False):
     else:
         directory = conf.MODELS_DIR
     for file in os.listdir(directory):
-        openFile = open((directory + "/" + file), "rb")
-        result.append(pickle.load(openFile))
-        openFile.close()
+        if file != ".keep":
+            openFile = open((directory + "/" + file), "rb")
+            result.append(pickle.load(openFile))
+            openFile.close()
     return np.asarray(result)
 
 # merges two models
@@ -243,14 +245,14 @@ cpdef void modelMergeNew(tuple data):
                     # if the average over all merged frames compared to the current
                     # frame of the current model is under tolerance we merge the
                     # current frame to the others
-                    if compare(np.asarray(in_array[0][pos], dtype=np.uint32), minimalizedRecords[i][j]) < tolerance:
+                    if compare(np.asarray(in_array[0][pos], dtype=np.uint64), minimalizedRecords[i][j]) < tolerance:
                         result[pos] = np.add(result[pos], in_array[i + 1][j])
                         counterResult[pos] += 1
                         counter[i] = j
         #print(str(iteration) + " | Sum calculated")
         # calculate the average from the stored sum
         for pos in range(len(result)):
-            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.uint32)
+            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.uint64)
         #print(str(iteration) + " | Average calculated")
         tolerance /= conf.TOLERANCE_MULTIPLIER
         print("Merged iteration " + str(iteration) + ", with " + str(length) + " records | Tolerance: " + str(tolerance))
@@ -294,14 +296,14 @@ cpdef void modelMergeNewOld(tuple data):
                     # if the average over all merged frames compared to the current
                     # frame of the current model is under tolerance we merge the
                     # current frame to the others
-                    if compare(np.asarray(in_array[0][pos], dtype=np.uint32), in_array[i + 1][j]) < tolerance:
+                    if compare(np.asarray(in_array[0][pos], dtype=np.uint64), in_array[i + 1][j]) < tolerance:
                         result[pos] = np.add(result[pos], in_array[i + 1][j])
                         counterResult[pos] += 1
                         counter[i + 1] = j
         #print(str(iteration) + " | Sum calculated")
         # calculate the average from the stored sum
         for pos in range(len(result)):
-            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.uint32)
+            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.uint64)
         #print(str(iteration) + " | Average calculated")
         tolerance /= conf.TOLERANCE_MULTIPLIER
         print("Merged iteration " + str(iteration) + ", length: " + str(len(result)) + " | Tolerance: " + str(tolerance))
@@ -453,14 +455,19 @@ cdef CUINT64_t calculateToleranceOld(list record, int minFrames, int maxFrames, 
     return tolerance
 
 
-cpdef np.ndarray[CUINT32_t] process(np.ndarray[CINT16_t] frame):
+cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
     
     # TODO baue das generisch
     #cdef int rate = 44100
     cdef np.ndarray tmp = rfft(frame)
-    #tmp = np.abs(tmp)
+    #print("tmp[0]: " + str(tmp[0]) + " | type of tmp[0]: " + str(type(tmp[0])))
     # needed for rfft
-    tmp = np.uint32(tmp)
+    tmp = np.abs(tmp)
+    tmp = np.uint64(tmp)
+    #print("tmp[0]: " + str(tmp[0]) + " | type of tmp[0]: " + str(type(tmp[0])))
+    tmp = extractFeatures(tmp)
+    for i in range(tmp.size):
+        tmp[i] = tmp[i]*tmp[i]
     return tmp
     #np.split(np.uint64(np.abs(fft(frame))), 2)[0]
 
@@ -473,7 +480,7 @@ cdef void debugCalculateTolerance(list record, CUINT64_t tolerance, int iteratio
         debugCompare(record[i], record[i+1], file, tolerance, i)
     file.close()
 
-cpdef void debugCompare(np.ndarray[CUINT32_t] in_array1, np.ndarray[CUINT32_t] in_array2, file, CUINT64_t tolerance, frameNumber):
+cpdef void debugCompare(np.ndarray[CUINT64_t] in_array1, np.ndarray[CUINT64_t] in_array2, file, CUINT64_t tolerance, frameNumber):
     cdef CUINT64_t result = 18446744073709551615
     cdef Py_ssize_t i
     cdef CUINT64_t tmp1 = 0

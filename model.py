@@ -8,7 +8,6 @@ class Model(object):
     # Constructor
 
     _features = None
-    _extractedFeatures = None
     _tolerance = None
     _name = None
     _score = -1.0
@@ -21,11 +20,6 @@ class Model(object):
         self.tolerance = tolerance
         self.name = name
         self.influencedBy = influencedBy
-
-
-    @property
-    def extractedFeatures(self):
-        return self._extractedFeatures
    
     @property
     def features(self):
@@ -56,13 +50,6 @@ class Model(object):
         if self._features == None:
             self._features = features
 
-    @extractedFeatures.setter
-    def extractedFeatures(self, extractedFeatures):
-        if self._extractedFeatures == None:
-            self._extractedFeatures = []
-            for i in extractedFeatures:
-                self._extractedFeatures.append(f.extractFeatures(i))
-
     @tolerance.setter
     def tolerance(self, tolerance):
         if self._tolerance == None:
@@ -85,4 +72,4 @@ class Model(object):
     @score.setter
     def score(self, integer):
         if self._matches >= 0:
-            self._score = float((float(self._matches) * float(self._influencedBy) * 10000000000) / float(self._tolerance))
+            self._score = float((float(self._matches) * float(self._influencedBy) * 100000) / float(self._tolerance))

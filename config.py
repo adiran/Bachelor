@@ -30,7 +30,7 @@ TOLERANCE_MULTIPLIER = 1
 
 # how many frames without a match are allowed before we assume we are not
 # in a model
-FRAME_COUNT = 3
+FRAME_COUNT = 5
 
 # counter for waveoutput in multiple files. first file will get this number
 WAVENUMBER = 1

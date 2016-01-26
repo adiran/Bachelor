@@ -12,10 +12,13 @@ CUINT64 = np.uint64
 ctypedef np.uint64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
-CUINT32 = np.uint32
-ctypedef np.uint32_t CUINT32_t
+CUINT64 = np.uint64
+ctypedef np.uint64_t CUINT64_t
 
-def qualityCheck(model, str fileName, int counter):
+def qualityCheck(tuple data):
+    cdef model = data[0]
+    cdef str fileName = data[1]
+    cdef int counter = data[2]
 
     print("QS Number: " + str(counter) + " | fileName: " + fileName)
 
@@ -30,7 +33,7 @@ def qualityCheck(model, str fileName, int counter):
     cdef bint recognized
     cdef bytes framesAsString
     cdef np.ndarray[CINT16_t] frame
-    cdef np.ndarray[CUINT32_t] feature
+    cdef np.ndarray[CUINT64_t] feature
     cdef CUINT64_t compared
 
     # do it while there are wave files
@@ -57,8 +60,6 @@ def qualityCheck(model, str fileName, int counter):
                         frame, np.fromstring(framesAsString, np.int16))
                     
                     feature = f.process(frame)
-                    #print("Type: " + str(type(f.extractFeatures(feature)[0])))
-                    feature = f.extractFeatures(feature)
                     compared = f.compare(features[modelPosition], feature)
                     #print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance - compared))
                     if compared < tolerance:
@@ -89,4 +90,8 @@ def qualityCheck(model, str fileName, int counter):
                                 recognized = False
         wavenumber += 1
         wf.close()
-    return result
+    model.matches = result
+    model.score = 0
+    print("QS Number: " + str(counter) + " | Matches: " + str(model.matches))
+    f.storeModel(model, True, counter)
+

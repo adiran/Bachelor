@@ -27,7 +27,7 @@ def main():
 
     # define callback for PyAudio
 
-    input("Press Enter key to start listening")
+    raw_input("Press Enter key to start listening")
 
     # wait to prevent to capture the hitting of enter key
     time.sleep(.08)
@@ -51,7 +51,7 @@ def main():
 
     # wait for stream to finish
     while stream.is_active():
-        input("Press Enter key to stop listening")
+        raw_input("Press Enter key to stop listening")
         stream.stop_stream()
     
     # close stream

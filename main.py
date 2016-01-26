@@ -17,7 +17,7 @@ while userDoesntWantToQuit:
     print("\t2\ttrain a model")
     print("\t3\tlisten an recognize sounds")
     print("\t4\tquit")
-    userInput = input("What do you want to do?")
+    userInput = raw_input("What do you want to do?")
     try:
         selectedOption = int(userInput)
         if selectedOption > 0:
