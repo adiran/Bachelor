@@ -44,26 +44,6 @@ def preprocess(wf, fileName, wavenumber):
         for i in range(loops):
             
             framesAsString = wf.readframes(512)
-            #audioLevel = math.sqrt(
-             #   abs(audioop.avg(framesAsString, 4)))
-            #print("AudioLevel of these frames: " + str(audioLevel) + " | THRESHOLD: " + str(conf.THRESHOLD))
-            #framesSwitch = True
-            # if audio level is under conf.THRESHOLD but we had sound in the frames before we capture a few frames more to prevent single missing frames
-            # first we check the audio level because framesAfterSound > 0
-            # occures way more than aduioLevel <= conf.THRESHOLD
-            #if audioLevel <= conf.THRESHO         
-        #if framesAfterSound > 0:
-         #   audioLevel = conf.THRESHOLD + 1
-          #  framesAfterSound -= 1
-           # framesSwitch = False
-            # the whole preprocessing
-            #if audioLevel > conf.THRESHOLD:
-        # if framesAfterSound has been decrement but audio level rised over conf.THRESHOLD again we reset framesAfterSound
-        # first we check if we decreased framesAfterSound because
-        # framesSwitch is True by default
-        #if framesAfterSound < conf.FRAMES_AFTER_SOUND:
-         #   if framesSwitch:
-          #      framesAfterSound = conf.FRAMES_AFTER_SOUND
             if switch:
                 frame = np.fromstring(framesAsString, np.int16)
                 switch = False
@@ -158,12 +138,6 @@ def main():
                  modelName,
                  i))
 
-        # for i in data:
-         #   model, minFrames, maxFrames, name, iteration = i
-          #  print("Model beginns with: " + str(model[0][0][0]))
-
-        
-
         print("Length model: " + str(len(model)) + " | model[0]: " + str(len(model[0])) + " | model[0][0]: " + str(len(model[0][0])) + " | model[0][0][0]: " + str((model[0][0][0])))
         beginning = time.time()
         f.clearTmpFolder()
@@ -176,7 +150,6 @@ def main():
             for i in data:
                 f.modelMergeNew(i)
 
-#        result.get()
         print()
         print("Computed the models in " + str(time.time() - beginning) + " seconds. Load them for scoring. Don't worry this might take some time...")
         print()

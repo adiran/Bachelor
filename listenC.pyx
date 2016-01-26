@@ -16,17 +16,6 @@ CUINT64 = np.uint64
 ctypedef np.uint64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
-CUINT64 = np.uint64
-ctypedef np.uint64_t CUINT64_t
-
-#global variables see setup() for more information
-#models
-#modelPosition
-#modelNumber
-#frameCount
-#number
-#switch
-#frame
 
 cpdef setup():
     global models
@@ -60,6 +49,7 @@ cpdef setup():
 
     # used for storing half of a frame because of the switch
     frame = []    
+
 
 cpdef listen(in_data):
     cdef np.ndarray[CUINT64_t] data
@@ -129,6 +119,4 @@ cpdef listen(in_data):
                     else:
                         modelNumber = -1
                         modelPosition = 0
-            #else:
-            #    print("still in frame %d. frameCount = %d" %(modelPosition + 1, frameCount))
         switch = True

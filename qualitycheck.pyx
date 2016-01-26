@@ -12,8 +12,6 @@ CUINT64 = np.uint64
 ctypedef np.uint64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
-CUINT64 = np.uint64
-ctypedef np.uint64_t CUINT64_t
 
 def qualityCheck(tuple data):
     cdef model = data[0]
