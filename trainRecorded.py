@@ -76,7 +76,7 @@ def main():
     model = []
     wavenumber = 1
     # TODO just for testing. recordsName as method argument needed
-    fileName, modelName, minFrames, maxFrames, optimalFrames, iterations = interactions.getTrainParameters()
+    fileName, modelName, optimalFrames, iterations = interactions.getTrainParameters()
     
     # do it while there are wave files
     
@@ -132,8 +132,6 @@ def main():
             #print("Next record starts with: " + str(model[1][0]))
             data.append(
                 (copy.deepcopy(model),
-                 minFrames,
-                 maxFrames,
                  optimalFrames,
                  modelName,
                  i))
@@ -192,6 +190,7 @@ def main():
         # get the model number and substract 1 because list indexing starts
         # with 0
         modelNumber = interactions.getModelNumber(len(models)+1) - 1
+        print("You selected Model " + str(modelNumber) + " with " + str(models[modelNumber].matches) + " Matches and a Score of: " + str(models[modelNumber].score))
         f.storeModel(models[modelNumber])
 
 

@@ -36,7 +36,53 @@ def main():
     global recordNumber
     dirName, recordNumber, recordDuration = interactions.getRecordParameters()
 
-    userInput = ''  # TODO t'
+    print("First we record the background noise, so please don't make any noise.")
+    print(
+        "Please note that there is a delay of 0,08 seconds before the recording start to prevent to capture you hitting the Enter key")
+
+    # open audio stream with callback function
+    stream = p.open(format=conf.FORMAT,
+                channels=conf.CHANNELS,
+                rate=RATE,
+                input=True,
+                frames_per_buffer=conf.CHUNK,
+                stream_callback=callback,
+                input_device_index=conf.DEVICE_INDEX)
+    raw_input("Press Enter key to start recording of background noise.")
+    # wait to prevent to capture the hitting of enter key
+    time.sleep(.08)#        print("1")
+    waveFrames = []
+    # start audio stream
+    stream.start_stream()
+    print("* recording")
+    # wait for stream to finish
+    while stream.is_active():
+        time.sleep(recordDuration)
+        stream.stop_stream()
+    print("* done recording")
+    print()
+    
+    # close stream
+    stream.close()
+    
+    wf = wave.open("tmp/tmp.wav", "wb")
+    wf.setnchannels(conf.CHANNELS)
+    wf.setsampwidth(p.get_sample_size(conf.FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(b''.join(waveFrames))
+    wf.close
+    userInput = interactions.wantToStoreRecord(waveFrames)
+    f.clearTmpFolder()
+    if userInput == '':
+        # write audio data to wave file
+        wf = wave.open(
+            str(dirName) + "/backgroundNoise.wav", "wb")
+        wf.setnchannels(conf.CHANNELS)
+        wf.setsampwidth(p.get_sample_size(conf.FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(waveFrames))
+        wf.close
+
     while userInput == '':  # TODO t':
         print("Ready to record %d seconds" % (recordDuration))
         print(
@@ -51,7 +97,7 @@ def main():
                     stream_callback=callback,
                     input_device_index=conf.DEVICE_INDEX)
 
-        raw_input("Press Enter key to start " + str(recordNumber) + ". recording")
+        raw_input("Press Enter key to start " + str(recordNumber) + ". recording.")
 
         # wait to prevent to capture the hitting of enter key
         time.sleep(.08)

@@ -7,6 +7,7 @@ import numpy as np
 
 #own imports
 import config as conf
+import functions as f
 
 # instantiate PyAudio
 p = pyaudio.PyAudio()
@@ -57,52 +58,7 @@ def getTrainParameters():
         str(recordName) +
         ")?")
     if userInput != "":
-        modelName = recordName
-
-    print()
-    minFrames = conf.MIN_FRAMES
-    print("How many frames should this model at least have? Minimum is " +
-          str(minFrames) + ".")
-    isUserInputNotANumber = True
-    while isUserInputNotANumber:
-        userInput = raw_input(
-            "Input number of frames or nothing for minimum (" + str(minFrames) + "): ")
-        if userInput != "":
-            try:
-                tmpMinFrames = int(userInput)
-                if tmpMinFrames > 1:
-                    isUserInputNotANumber = False
-                    minFrames = tmpMinFrames
-                else:
-                    print("Number of frames should be greater or equal 2.")
-            except ValueError:
-                print("That was not a number.")
-        else:
-            isUserInputNotANumber = False
-
-    print()
-    print(
-        "How many frames should this model at maximum have? Standard is the double of minimum")
-    maxFrames = 2 * minFrames
-    isUserInputNotANumber = True
-    while isUserInputNotANumber:
-        userInput = raw_input(
-            "Input number of frames or nothing for standard (" + str(maxFrames) + "): ")
-        if userInput != "":
-            try:
-                tmpMaxFrames = int(userInput)
-                if tmpMaxFrames > minFrames:
-                    isUserInputNotANumber = False
-                    maxFrames = tmpMaxFrames
-                else:
-                    print(
-                        "Number of frames should be greater than the minimum of " +
-                        str(minFrames) +
-                        ".")
-            except ValueError:
-                print("That was not a number.")
-        else:
-            isUserInputNotANumber = False
+        modelName = userInput
 
     print()
     print(
@@ -114,16 +70,10 @@ def getTrainParameters():
         if userInput != "":
             try:
                 optimalFrames = int(userInput)
-                if optimalFrames >= minFrames:
-                    if optimalFrames <= maxFrames:
-                        isUserInputNotANumber = False
-                    else:
-                        print("Number of frames should be smaller or equal than the maximum of " + str(maxFrames) + ".")
+                if optimalFrames > 1:
+                    isUserInputNotANumber = False
                 else:
-                    print(
-                        "Number of frames should be greater or equal than the minimum of " +
-                        str(minFrames) +
-                        ".")
+                    print("You should have more than 1 Frames.")
             except ValueError:
                 print("That was not a number.")
 
@@ -156,7 +106,7 @@ def getTrainParameters():
         else:
             isUserInputNotANumber = False
 
-    return(fileName, modelName, minFrames, maxFrames, optimalFrames, iterations)
+    return(fileName, modelName, optimalFrames, iterations)
 
 
 def getModelNumber(maxModelNumber):
@@ -168,7 +118,7 @@ def getModelNumber(maxModelNumber):
             modelNumber = int(userInput)
             if modelNumber > maxModelNumber:
                 print("There are only " + str(maxModelNumber) + " models so your input shouldn't be greater than this.")
-            elif modelNumber > 1:
+            elif modelNumber > 0:
                 isUserInputNotANumber = False
             else:
                 print("A negativ number or 0 doesn't make sense here so please type a number greater than 0")
@@ -296,4 +246,3 @@ def wantToStoreRecord(frames):
     stream.stop_stream()
     stream.close()
     return raw_input("Press Enter to save that record or input anything for not saving it.")
-

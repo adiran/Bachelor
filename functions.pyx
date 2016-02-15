@@ -1,6 +1,6 @@
 import numpy as np
 cimport numpy as np
-from scipy.fftpack import rfft
+from scipy.fftpack import fft
 import copy
 import os
 import pickle
@@ -192,7 +192,7 @@ cdef list minimalizeFeatures(list in_array, CUINT64_t tolerance, int optimalFram
         result.append(copy.deepcopy(in_array[i]/counter[i]))
     return (result)
 
-# loads a previously stored model
+# loads previously stored models
 cpdef np.ndarray loadModels(bint tmp = False):
     cdef list result =  []
     cdef str directory
@@ -207,15 +207,22 @@ cpdef np.ndarray loadModels(bint tmp = False):
             openFile.close()
     return np.asarray(result)
 
+# loads all previously stored models that are marked as active
+cpdef np.ndarray loadActivatedModels():
+    cdef np.ndarray models = loadModels()
+    cdef list result = []
+    for i in models:
+        if i.loaded:
+            result.append(i)
+    return np.asarray(result)
+
 # merges two models
 cpdef void modelMergeNew(tuple data) except *:
     cdef list in_array = data[0]
     cdef list minimalizedRecords = []
-    cdef int minFrames = data[1]
-    cdef int maxFrames = data[2]
-    cdef int optimalFrames = data[3]
-    cdef str name = data[4]
-    cdef int iteration = data[5]
+    cdef int optimalFrames = data[1]
+    cdef str name = data[2]
+    cdef int iteration = data[3]
     cdef list result
     cdef CUINT64_t tolerance
     cdef Py_ssize_t i
@@ -276,7 +283,20 @@ cpdef void storeModel(model, bint tmp=False, int iteration=0) except *:
         fileName = model.name
         while os.path.isfile(str(dirName) + str(fileName)):
             fileName = interactions.getDifferentModelFileName(fileName)
+            model.name = fileName
 
+    outputFile = open(dirName + fileName, "wb")
+    pickle.dump(model, outputFile, pickle.HIGHEST_PROTOCOL)
+    outputFile.close()
+
+# stores a model at the modelFolder or in tmp folder
+cpdef void storeSameModel(model) except *:
+    cdef str fileName
+    cdef str dirName
+    
+    dirName = conf.MODELS_DIR + "/"
+    fileName = model.name
+    
     outputFile = open(dirName + fileName, "wb")
     pickle.dump(model, outputFile, pickle.HIGHEST_PROTOCOL)
     outputFile.close()
@@ -291,10 +311,11 @@ cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
     
     # TODO baue das generisch
     #cdef int rate = 44100
-    cdef np.ndarray tmp = rfft(frame)
+    cdef np.ndarray tmp = fft(frame)
     #print("tmp[0]: " + str(tmp[0]) + " | type of tmp[0]: " + str(type(tmp[0])))
     # needed for rfft
-    tmp = np.abs(tmp)
+    # TODO ist das sinnvoll?
+    tmp = np.absolute(np.split(tmp, 2)[0])
     tmp = np.uint64(tmp)
     #print("tmp[0]: " + str(tmp[0]) + " | type of tmp[0]: " + str(type(tmp[0])))
     tmp = extractFeatures(tmp)

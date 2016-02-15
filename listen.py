@@ -11,10 +11,12 @@ import numpy as np
 import functions as f
 from scipy.fftpack import fft
 
-import listenC as listen
+import listenC
 
 def callback(in_data, frame_count, time_info, status):
-    listen.listen(in_data)
+    if status > 0:
+        print("Status: " + str(status))
+    listenC.listen(in_data)
     return (None, pyaudio.paContinue)
 
 def main():
@@ -25,15 +27,16 @@ def main():
     # get default sample rate
     RATE = int(p.get_device_info_by_index(conf.DEVICE_INDEX)['defaultSampleRate'])
 
-    # define callback for PyAudio
+    # setup the listenC
+    listenC.setup()
 
     raw_input("Press Enter key to start listening")
 
     # wait to prevent to capture the hitting of enter key
     time.sleep(.08)
 
-    # setup the listenC
-    listen.setup()
+    # TODO just for testing, set up time
+    listenC.beginning()
 
     # open audio stream with callback function
     stream = p.open(format=conf.FORMAT,
