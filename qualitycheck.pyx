@@ -8,8 +8,8 @@ from scipy.fftpack import fft
 import copy
 
 # Cython stuff
-CUINT64 = np.uint64
-ctypedef np.uint64_t CUINT64_t
+CUINT64 = np.float64
+ctypedef np.float64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
 

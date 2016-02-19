@@ -14,8 +14,8 @@ from scipy.fftpack import fft
 import listenC
 
 def callback(in_data, frame_count, time_info, status):
-    if status > 0:
-        print("Status: " + str(status))
+    #if status > 0:
+        #print("Status: " + str(status))
     listenC.listen(in_data)
     return (None, pyaudio.paContinue)
 

@@ -1,14 +1,13 @@
 import numpy as np
 cimport numpy as np
-from scipy.fftpack import fft
+from scipy.fftpack import fft, ifft
 import copy
 import os
 import pickle
 import time
 import random
 #from features import mfcc
-import sys
-import pdb
+import math
 
 #own imports
 import config as conf
@@ -18,29 +17,12 @@ import interactions
 
 # Cython stuff
 CFLOAT = np.float64
-ctypedef np.float64_t CFLOAT_t
-CUINT64 = np.uint64
-ctypedef np.uint64_t CUINT64_t
+ctypedef np.float64_t CFLOAT_
+tCUINT64 = np.float64
+ctypedef np.float64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
 
-
-cdef np.ndarray[CUINT64_t] extractFeatures(np.ndarray[CUINT64_t] in_array):
-    cdef Py_ssize_t i
-    cdef np.ndarray[CUINT64_t] result = np.zeros(64, dtype=np.uint64)
-    cdef CUINT64_t j = 0
-    cdef CUINT64_t k = 0
-    cdef CUINT64_t h = 0
-    #print("length in_array: " + str(len(in_array)) + " | length result: " + str(len(result)))
-    for i in in_array:
-        result[j] += i
-        k += 1
-        h += 1
-        if(k == 16):
-            j += 1
-            k = 0
-    #print("Type of: " + str(type(result[0])))
-    return result
 
 # summe der quadrate der distanzen zweier int arrays
 
@@ -256,14 +238,14 @@ cpdef void modelMergeNew(tuple data) except *:
                     # if the average over all merged frames compared to the current
                     # frame of the current model is under tolerance we merge the
                     # current frame to the others
-                    if compare(np.asarray(in_array[0][pos], dtype=np.uint64), minimalizedRecords[i][j]) < tolerance:
+                    if compare(np.asarray(in_array[0][pos], dtype=np.float64), minimalizedRecords[i][j]) < tolerance:
                         result[pos] = np.add(result[pos], in_array[i + 1][j])
                         counterResult[pos] += 1
                         counter[i] = j
         #print(str(iteration) + " | Sum calculated")
         # calculate the average from the stored sum
         for pos in range(len(result)):
-            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.uint64)
+            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.float64)
         #print(str(iteration) + " | Average calculated")
         tolerance /= conf.TOLERANCE_MULTIPLIER
         print("Merged iteration " + str(iteration) + ", with " + str(length) + " records | Tolerance: " + str(tolerance))
@@ -306,20 +288,41 @@ cpdef void clearTmpFolder() except *:
     for file in os.listdir(conf.TMP_DIR):
         os.remove(conf.TMP_DIR + "/" + file)
 
-
-cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
-    
-    # TODO baue das generisch
-    #cdef int rate = 44100
+# Preprocessing with Spectrum
+cpdef np.ndarray[CUINT64_t] processSpectrum(np.ndarray[CINT16_t] frame):
     cdef np.ndarray tmp = fft(frame)
-    #print("tmp[0]: " + str(tmp[0]) + " | type of tmp[0]: " + str(type(tmp[0])))
-    # needed for rfft
-    # TODO ist das sinnvoll?
     tmp = np.absolute(np.split(tmp, 2)[0])
-    tmp = np.uint64(tmp)
-    #print("tmp[0]: " + str(tmp[0]) + " | type of tmp[0]: " + str(type(tmp[0])))
-    tmp = extractFeatures(tmp)
-    #for i in range(tmp.size):
-        #tmp[i] = tmp[i]*tmp[i]
-    return tmp
-    #np.split(np.uint64(np.abs(fft(frame))), 2)[0]
+    tmp = np.float64(tmp)
+    return extractFeatures(tmp)
+
+# Preprocessing with Cepstrum
+cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
+    cdef Py_ssize_t i
+    cdef np.ndarray[CUINT64_t] result = np.zeros(64, dtype=np.float64)
+    cdef Py_ssize_t k = 0
+    cdef np.ndarray tmp = fft(frame)
+    tmp = np.absolute(tmp)
+    tmp[0] *= tmp[0]
+    for i in range(1, 513):
+        tmp[i] *= tmp[i]
+        tmp[1024 - i] = tmp[i]
+    tmp = np.log(tmp)
+    tmp = ifft(tmp)
+    tmp = np.absolute(np.split(tmp, 2)[0])
+    for i in range(512):
+        result[k%16] += math.pow(tmp[i], 2)
+        k += 1
+    result = np.float64(result)
+    return result
+
+
+cdef np.ndarray[CUINT64_t] extractFeatures(np.ndarray[CUINT64_t] in_array):
+    cdef Py_ssize_t i
+    cdef np.ndarray[CUINT64_t] result = np.empty(64, dtype=np.float64)
+    cdef Py_ssize_t k = 0
+    #print("length in_array: " + str(len(in_array)) + " | length result: " + str(len(result)))
+    for i in range(len(in_array)):
+        result[k%16] += in_array[i]
+        k += 1
+    #print("Type of: " + str(type(result[0])))
+    return result

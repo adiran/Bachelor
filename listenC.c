@@ -711,22 +711,22 @@ typedef npy_longdouble __pyx_t_5numpy_longdouble_t;
  * # Cython stuff
  * CFLOAT = np.float64
  * ctypedef np.float64_t CFLOAT_t             # <<<<<<<<<<<<<<
- * CUINT64 = np.uint64
- * ctypedef np.uint64_t CUINT64_t
+ * CUINT64 = np.float64
+ * ctypedef np.float64_t CUINT64_t
  */
 typedef __pyx_t_5numpy_float64_t __pyx_t_7listenC_CFLOAT_t;
 
 /* "listenC.pyx":17
  * ctypedef np.float64_t CFLOAT_t
- * CUINT64 = np.uint64
- * ctypedef np.uint64_t CUINT64_t             # <<<<<<<<<<<<<<
+ * CUINT64 = np.float64
+ * ctypedef np.float64_t CUINT64_t             # <<<<<<<<<<<<<<
  * CINT16 = np.int16
  * ctypedef np.int16_t CINT16_t
  */
-typedef __pyx_t_5numpy_uint64_t __pyx_t_7listenC_CUINT64_t;
+typedef __pyx_t_5numpy_float64_t __pyx_t_7listenC_CUINT64_t;
 
 /* "listenC.pyx":19
- * ctypedef np.uint64_t CUINT64_t
+ * ctypedef np.float64_t CUINT64_t
  * CINT16 = np.int16
  * ctypedef np.int16_t CINT16_t             # <<<<<<<<<<<<<<
  * 
@@ -1157,7 +1157,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, cha
 static PyObject *__pyx_f_7listenC_setup(int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_7listenC_beginning(int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_7listenC_listen(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_7listenC_CUINT64_t = { "CUINT64_t", NULL, sizeof(__pyx_t_7listenC_CUINT64_t), { 0 }, 0, IS_UNSIGNED(__pyx_t_7listenC_CUINT64_t) ? 'U' : 'I', IS_UNSIGNED(__pyx_t_7listenC_CUINT64_t), 0 };
+static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_7listenC_CUINT64_t = { "CUINT64_t", NULL, sizeof(__pyx_t_7listenC_CUINT64_t), { 0 }, 0, 'R', 0, 0 };
 #define __Pyx_MODULE_NAME "listenC"
 int __pyx_module_is_main_listenC = 0;
 
@@ -1215,7 +1215,6 @@ static char __pyx_k_loaded[] = "loaded";
 static char __pyx_k_models[] = "models";
 static char __pyx_k_number[] = "number";
 static char __pyx_k_switch[] = "switch";
-static char __pyx_k_uint64[] = "uint64";
 static char __pyx_k_CUINT64[] = "CUINT64";
 static char __pyx_k_Matches[] = " | Matches:\t";
 static char __pyx_k_compare[] = "compare";
@@ -1227,7 +1226,6 @@ static char __pyx_k_timebib[] = "timebib";
 static char __pyx_k_Model_Nr[] = "Model Nr:\t";
 static char __pyx_k_features[] = "features";
 static char __pyx_k_Tolerance[] = " | Tolerance:\t";
-static char __pyx_k_beginning[] = "beginning";
 static char __pyx_k_functions[] = "functions";
 static char __pyx_k_tolerance[] = "tolerance";
 static char __pyx_k_Recognized[] = "Recognized ";
@@ -1241,6 +1239,7 @@ static char __pyx_k_influencedBy[] = "influencedBy";
 static char __pyx_k_Influenced_by[] = " | Influenced by:\t";
 static char __pyx_k_modelPosition[] = "modelPosition";
 static char __pyx_k_scipy_fftpack[] = "scipy.fftpack";
+static char __pyx_k_beginning_time[] = "beginning_time";
 static char __pyx_k_Recognized_model[] = "Recognized model ";
 static char __pyx_k_loadActivatedModels[] = "loadActivatedModels";
 static char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
@@ -1272,7 +1271,7 @@ static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_kp_s__2;
 static PyObject *__pyx_kp_s_after;
 static PyObject *__pyx_n_s_append;
-static PyObject *__pyx_n_s_beginning;
+static PyObject *__pyx_n_s_beginning_time;
 static PyObject *__pyx_n_s_compare;
 static PyObject *__pyx_n_s_conf;
 static PyObject *__pyx_n_s_config;
@@ -1314,7 +1313,6 @@ static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_time;
 static PyObject *__pyx_n_s_timebib;
 static PyObject *__pyx_n_s_tolerance;
-static PyObject *__pyx_n_s_uint64;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_zeros_like;
 static PyObject *__pyx_pf_7listenC_setup(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
@@ -2017,7 +2015,7 @@ static PyObject *__pyx_pf_7listenC_setup(CYTHON_UNUSED PyObject *__pyx_self) {
  * 
  * 
  * cpdef beginning():             # <<<<<<<<<<<<<<
- *     global beginning
+ *     global beginning_time
  * 
  */
 
@@ -2036,7 +2034,7 @@ static PyObject *__pyx_f_7listenC_beginning(CYTHON_UNUSED int __pyx_skip_dispatc
   /* "listenC.pyx":73
  * 
  *     # TODO just for testing
- *     beginning = timebib.time()             # <<<<<<<<<<<<<<
+ *     beginning_time = timebib.time()             # <<<<<<<<<<<<<<
  * 
  * cpdef listen(in_data):
  */
@@ -2063,14 +2061,14 @@ static PyObject *__pyx_f_7listenC_beginning(CYTHON_UNUSED int __pyx_skip_dispatc
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_beginning, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_beginning_time, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "listenC.pyx":69
  * 
  * 
  * cpdef beginning():             # <<<<<<<<<<<<<<
- *     global beginning
+ *     global beginning_time
  * 
  */
 
@@ -2129,7 +2127,7 @@ static PyObject *__pyx_pf_7listenC_2beginning(CYTHON_UNUSED PyObject *__pyx_self
 }
 
 /* "listenC.pyx":75
- *     beginning = timebib.time()
+ *     beginning_time = timebib.time()
  * 
  * cpdef listen(in_data):             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[CUINT64_t] data
@@ -2697,7 +2695,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
  *                 print("Recognized " + str(modelPosition[i]) + ". frame.")
  *                 frameCount[i] = conf.FRAME_COUNT             # <<<<<<<<<<<<<<
  *                 if modelPosition[i] == (len(models[i].features) - 1):
- *                     global beginning
+ *                     global beginning_time
  */
         __pyx_t_10 = __Pyx_GetModuleGlobalName(__pyx_n_s_conf); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_GOTREF(__pyx_t_10);
@@ -2714,8 +2712,8 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
  *                 print("Recognized " + str(modelPosition[i]) + ". frame.")
  *                 frameCount[i] = conf.FRAME_COUNT
  *                 if modelPosition[i] == (len(models[i].features) - 1):             # <<<<<<<<<<<<<<
- *                     global beginning
- *                     recognizeTime = int(timebib.time() - beginning)
+ *                     global beginning_time
+ *                     recognizeTime = int(timebib.time() - beginning_time)
  */
         __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_modelPosition); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 104; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_GOTREF(__pyx_t_4);
@@ -2743,8 +2741,8 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
 
           /* "listenC.pyx":106
  *                 if modelPosition[i] == (len(models[i].features) - 1):
- *                     global beginning
- *                     recognizeTime = int(timebib.time() - beginning)             # <<<<<<<<<<<<<<
+ *                     global beginning_time
+ *                     recognizeTime = int(timebib.time() - beginning_time)             # <<<<<<<<<<<<<<
  *                     recognizeTimeMinutes = int(recognizeTime / 60)
  *                     recognizeTime -= recognizeTimeMinutes * 60
  */
@@ -2771,7 +2769,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
           }
           __Pyx_GOTREF(__pyx_t_7);
           __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-          __pyx_t_10 = __Pyx_GetModuleGlobalName(__pyx_n_s_beginning); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 106; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          __pyx_t_10 = __Pyx_GetModuleGlobalName(__pyx_n_s_beginning_time); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 106; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           __Pyx_GOTREF(__pyx_t_10);
           __pyx_t_4 = PyNumber_Subtract(__pyx_t_7, __pyx_t_10); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 106; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           __Pyx_GOTREF(__pyx_t_4);
@@ -2784,8 +2782,8 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
           __pyx_t_10 = 0;
 
           /* "listenC.pyx":107
- *                     global beginning
- *                     recognizeTime = int(timebib.time() - beginning)
+ *                     global beginning_time
+ *                     recognizeTime = int(timebib.time() - beginning_time)
  *                     recognizeTimeMinutes = int(recognizeTime / 60)             # <<<<<<<<<<<<<<
  *                     recognizeTime -= recognizeTimeMinutes * 60
  *                     print("Recognized model " + models[i].name + " after " + str(recognizeTimeMinutes) + ":" + str(recognizeTime) + ".")
@@ -2799,7 +2797,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
           __pyx_t_4 = 0;
 
           /* "listenC.pyx":108
- *                     recognizeTime = int(timebib.time() - beginning)
+ *                     recognizeTime = int(timebib.time() - beginning_time)
  *                     recognizeTimeMinutes = int(recognizeTime / 60)
  *                     recognizeTime -= recognizeTimeMinutes * 60             # <<<<<<<<<<<<<<
  *                     print("Recognized model " + models[i].name + " after " + str(recognizeTimeMinutes) + ":" + str(recognizeTime) + ".")
@@ -2966,8 +2964,8 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
  *                 print("Recognized " + str(modelPosition[i]) + ". frame.")
  *                 frameCount[i] = conf.FRAME_COUNT
  *                 if modelPosition[i] == (len(models[i].features) - 1):             # <<<<<<<<<<<<<<
- *                     global beginning
- *                     recognizeTime = int(timebib.time() - beginning)
+ *                     global beginning_time
+ *                     recognizeTime = int(timebib.time() - beginning_time)
  */
         }
 
@@ -3071,7 +3069,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
   __pyx_L3:;
 
   /* "listenC.pyx":75
- *     beginning = timebib.time()
+ *     beginning_time = timebib.time()
  * 
  * cpdef listen(in_data):             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[CUINT64_t] data
@@ -5340,7 +5338,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 0, 1, 0},
   {&__pyx_kp_s_after, __pyx_k_after, sizeof(__pyx_k_after), 0, 0, 1, 0},
   {&__pyx_n_s_append, __pyx_k_append, sizeof(__pyx_k_append), 0, 0, 1, 1},
-  {&__pyx_n_s_beginning, __pyx_k_beginning, sizeof(__pyx_k_beginning), 0, 0, 1, 1},
+  {&__pyx_n_s_beginning_time, __pyx_k_beginning_time, sizeof(__pyx_k_beginning_time), 0, 0, 1, 1},
   {&__pyx_n_s_compare, __pyx_k_compare, sizeof(__pyx_k_compare), 0, 0, 1, 1},
   {&__pyx_n_s_conf, __pyx_k_conf, sizeof(__pyx_k_conf), 0, 0, 1, 1},
   {&__pyx_n_s_config, __pyx_k_config, sizeof(__pyx_k_config), 0, 0, 1, 1},
@@ -5382,7 +5380,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_time, __pyx_k_time, sizeof(__pyx_k_time), 0, 0, 1, 1},
   {&__pyx_n_s_timebib, __pyx_k_timebib, sizeof(__pyx_k_timebib), 0, 0, 1, 1},
   {&__pyx_n_s_tolerance, __pyx_k_tolerance, sizeof(__pyx_k_tolerance), 0, 0, 1, 1},
-  {&__pyx_n_s_uint64, __pyx_k_uint64, sizeof(__pyx_k_uint64), 0, 0, 1, 1},
   {&__pyx_kp_u_unknown_dtype_code_in_numpy_pxd, __pyx_k_unknown_dtype_code_in_numpy_pxd, sizeof(__pyx_k_unknown_dtype_code_in_numpy_pxd), 0, 1, 0, 0},
   {&__pyx_n_s_zeros_like, __pyx_k_zeros_like, sizeof(__pyx_k_zeros_like), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
@@ -5673,7 +5670,7 @@ PyMODINIT_FUNC PyInit_listenC(void)
  * # Cython stuff
  * CFLOAT = np.float64             # <<<<<<<<<<<<<<
  * ctypedef np.float64_t CFLOAT_t
- * CUINT64 = np.uint64
+ * CUINT64 = np.float64
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 14; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -5686,21 +5683,21 @@ PyMODINIT_FUNC PyInit_listenC(void)
   /* "listenC.pyx":16
  * CFLOAT = np.float64
  * ctypedef np.float64_t CFLOAT_t
- * CUINT64 = np.uint64             # <<<<<<<<<<<<<<
- * ctypedef np.uint64_t CUINT64_t
+ * CUINT64 = np.float64             # <<<<<<<<<<<<<<
+ * ctypedef np.float64_t CUINT64_t
  * CINT16 = np.int16
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 16; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_uint64); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 16; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 16; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_CUINT64, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 16; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "listenC.pyx":18
- * CUINT64 = np.uint64
- * ctypedef np.uint64_t CUINT64_t
+ * CUINT64 = np.float64
+ * ctypedef np.float64_t CUINT64_t
  * CINT16 = np.int16             # <<<<<<<<<<<<<<
  * ctypedef np.int16_t CINT16_t
  * 

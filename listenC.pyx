@@ -13,8 +13,8 @@ import functions as f
 # Cython stuff
 CFLOAT = np.float64
 ctypedef np.float64_t CFLOAT_t
-CUINT64 = np.uint64
-ctypedef np.uint64_t CUINT64_t
+CUINT64 = np.float64
+ctypedef np.float64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
 
@@ -67,10 +67,10 @@ cpdef setup():
 
 
 cpdef beginning():
-    global beginning
+    global beginning_time
 
     # TODO just for testing
-    beginning = timebib.time()
+    beginning_time = timebib.time()
 
 cpdef listen(in_data):
     cdef np.ndarray[CUINT64_t] data
@@ -102,8 +102,8 @@ cpdef listen(in_data):
                 print("Recognized " + str(modelPosition[i]) + ". frame.")
                 frameCount[i] = conf.FRAME_COUNT
                 if modelPosition[i] == (len(models[i].features) - 1):
-                    global beginning
-                    recognizeTime = int(timebib.time() - beginning)
+                    global beginning_time
+                    recognizeTime = int(timebib.time() - beginning_time)
                     recognizeTimeMinutes = int(recognizeTime / 60)
                     recognizeTime -= recognizeTimeMinutes * 60
                     print("Recognized model " + models[i].name + " after " + str(recognizeTimeMinutes) + ":" + str(recognizeTime) + ".")
