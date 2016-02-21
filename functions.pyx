@@ -15,6 +15,9 @@ import trainRecorded
 import model
 import interactions
 
+#TODO just for testing
+import sys
+
 # Cython stuff
 CFLOAT = np.float64
 ctypedef np.float64_t CFLOAT_
@@ -34,28 +37,27 @@ cpdef CUINT64_t compare(np.ndarray[CUINT64_t] recordData, np.ndarray[CUINT64_t] 
     cdef CUINT64_t tmp2
     if len(recordData) == len(modelData):
         for i in range(len(recordData)):
-            tmp1 = <CUINT64_t>abs(recordData[i])# * in_array1[i])
-            #print("Test1 " + str(in_array1[i]) + " | " + str(in_array2[i]))
-            tmp2 = <CUINT64_t>abs(modelData[i])# * in_array2[i])
-            #print("Test2 " + str(result) + " | " + str(abs(tmp1 - tmp2)) + " | " + str(result + abs(tmp1 - tmp2)))
-            if tmp1 > tmp2:
-                #print("Test2 " + str(result) + " | " + str(abs(tmp1 - tmp2)) + " | " + str(result + abs(tmp1 - tmp2)))
-                result += tmp1 - tmp2
-            else:
-                #print("Test2 " + str(result) + " | " + str(abs(tmp2 - tmp1)) + " | " + str(result + abs(tmp2 - tmp1)))
-                result += tmp2 - tmp1
-            #print("Test3")
+            tmp2 = <CUINT64_t>abs(modelData[i])
+            if math.isnan(tmp2) == False:
+                tmp1 = <CUINT64_t>abs(recordData[i])
+                if tmp1 > tmp2:
+                    result += tmp1 - tmp2
+                else:
+                    result += tmp2 - tmp1
     else:
         print("Compare failed because of different shapes")
         result = 18446744073709551615
     return result
 
 
-cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int iteration):
-    in_array = copy.deepcopy(in_array)
+cpdef tuple minimalizeAndCalcTolerance(tuple in_data):
+    cdef list in_array = copy.deepcopy(in_data[0])
+    cdef int optimalFrames = in_data[1]
+    cdef int iteration = in_data[2]
     cdef list frameMember = []
     cdef list diffrences = []
-    cdef CUINT64_t minDiffrence = 0.
+    cdef CUINT64_t diffrence = 0.
+    cdef CUINT64_t compared = 0.
     cdef Py_ssize_t i = 0
     cdef Py_ssize_t j = 0
     cdef Py_ssize_t pos = 0
@@ -77,12 +79,13 @@ cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int ite
     cdef int length = len(in_array)
     cdef np.ndarray[int] counterFrames = np.zeros(optimalFrames, dtype=int)
     cdef list result = []
+    cdef np.ndarray[CUINT64_t] resultTolerance = np.zeros(optimalFrames, dtype=np.float64)
     for i in range(length):
         frameMember.append(i)
         if i < length -1:
             diffrences.append(compare(in_array[i], in_array[i+1]))
     while length > optimalFrames:
-        minDiffrence = np.finfo(np.float64).max - np.finfo(np.float64).eps
+        diffrence = np.finfo(np.float64).max - np.finfo(np.float64).eps
         counter = 0
         counterAfter = 0
         posBeg = -1
@@ -97,13 +100,11 @@ cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int ite
         tmpFrameBefore = np.zeros_like(in_array[0], dtype=np.float64)
         tmpFrameAfter = np.zeros_like(in_array[0], dtype=np.float64)
         for i in range(len(diffrences)):
-            if diffrences[i] < minDiffrence:
-                #print("diffrences[" + str(i) + "]: " + str(diffrences[i]) + " | minDiffrence: " + str(minDiffrence))
+            if diffrences[i] < diffrence:
                 pos = i
-                minDiffrence = diffrences[i]
-        if minDiffrence > maxDiffrence:
-            maxDiffrence = minDiffrence
-        #print("Set frameMember[" + str(pos+1) +"] from " + str(frameMember[pos+1]) + " to " + str(frameMember[pos]) + ".")
+                diffrence = diffrences[i]
+        if diffrence > maxDiffrence:
+            maxDiffrence = diffrence
         tmpFrameMember = frameMember[pos + 1]
         j = pos + 1
         while frameMember[j] == tmpFrameMember:
@@ -179,125 +180,26 @@ cpdef tuple minimalizeAndCalcTolerance(list in_array, int optimalFrames, int ite
             tmpFrame = np.divide(in_array[i], np.float64(counterFrames[j]))
             counter = counterFrames[j] - 1
     result.append(tmpFrame)
-    #for i in range(optimalFrames - 1):
-        #print("Diffrences:\t" + str(compare(result[i], result[i+1])))
-    print("maxDiffrences:\t" + str(maxDiffrence))
-    return (result, maxDiffrence)
+    if conf.FREQUENCY_BAND_TRAINING:
+        #TODO
+        print("Not Yet implementatet")
+    j = 0
+    for i in range(len(in_array) - 1):
+        if frameMember[i] == frameMember[i + 1]:
+            compared = compare(in_array[i], in_array[i + 1])
+            if compared > resultTolerance[j]:
+                resultTolerance[j] = compared
+        else:
+            j += 1
+            if i < len(in_array) - 3:
+                if frameMember[i + 1] != frameMember[i + 2]:
+                    resultTolerance[j] = maxDiffrence
+    if resultTolerance[optimalFrames - 1] == 0.:
+        resultTolerance[optimalFrames - 1] = maxDiffrence
+    for i in range(optimalFrames):
+        resultTolerance[i] = (resultTolerance[i] + maxDiffrence)/2.
+    return (result, resultTolerance)
 
-cpdef tuple minimalizeAndCalcTolerance1(list in_array, int optimalFrames, int iteration):
-    in_array = copy.deepcopy(in_array)
-    cdef list counter = [1 for x in range(len(in_array))]
-    cdef list tmpCounter = []
-    cdef list diffrences = []
-    cdef list result = []
-    cdef np.ndarray[CUINT64_t] tmp
-    cdef CUINT64_t minDiffrence
-    cdef CUINT64_t maxDiffrence = 0
-    cdef int pos
-    cdef Py_ssize_t i
-    while len(in_array) > optimalFrames:
-        for i in range(len(in_array) - 1):
-            diffrences.append(compare(in_array[i]/counter[i], in_array[i+1]/counter[i+1]))
-        minDiffrence = diffrences[0]
-        pos = 0
-        for i in range(len(diffrences)):
-            if diffrences[i] < minDiffrence:
-                pos = i
-                minDiffrence = diffrences[i]
-        i = 0
-        while i < len(in_array):
-            if i == pos:
-                if minDiffrence > maxDiffrence:
-                    maxDiffrence = minDiffrence
-                tmp = in_array[i]
-                tmpCounter.append(counter[i] + counter[i+1])
-                for j in range(tmp.size):
-                    tmp[j] = (tmp[j] + in_array[i+1][j])
-                result.append(copy.deepcopy(tmp))
-                i += 2
-            else:
-                result.append(copy.deepcopy(in_array[i]))
-                tmpCounter.append(counter[i])
-                i += 1
-        in_array = copy.deepcopy(result)
-        counter = copy.deepcopy(tmpCounter)
-        diffrences = []
-        tmpCounter = []
-        result = []
-    for i in range(len(in_array)):
-        result.append(copy.deepcopy(in_array[i]/counter[i]))
-        if i < len(in_array)-1:
-            diffrences.append(compare(in_array[i], in_array[i+1]))
-    minDiffrence = diffrences[0]
-    for i in range(len(diffrences)):
-        if diffrences[i] < minDiffrence:
-            minDiffrence = diffrences[i]
-        #if iteration < 10:
-            #print(str(iteration) + " | Diffrences:\t\t" + str(diffrences[i]))
-        #else: 
-            #print(str(iteration) + " | Diffrences:\t" + str(diffrences[i]))
-    print(str(iteration) + " | maxDiffrence:\t" + str(maxDiffrence))
-    return (result, maxDiffrence)
-
-
-# minimalizes the features by comparing. Builds the average over all
-# similar frames
-cdef list minimalizeFeatures(list in_array, CUINT64_t tolerance, int optimalFrames, int iteration):
-    in_array = copy.deepcopy(in_array)
-    #print(str(iteration) + "mF | Length in_array: " + str(len(in_array)))
-    cdef list counter = [1 for x in range(len(in_array))]
-    cdef list tmpCounter = []
-    cdef list diffrences = []
-    cdef list result = []
-    cdef CUINT64_t minDiffrence
-    cdef int pos
-    cdef bint recalculate = True
-    cdef Py_ssize_t i
-    while recalculate:
-        #print("Length in_array: " + str(len(in_array)) + " | optimalFrames: " + str(optimalFrames))
-        diffrences = []
-        #print(str(iteration) + "mF 1")
-        for i in range(len(in_array) - 1):
-            diffrences.append(compare(in_array[i]/counter[i], in_array[i+1]/counter[i+1]))
-        #print(str(iteration) + "mF " + str(len(diffrences)))
-        minDiffrence = diffrences[0]
-        pos = 0
-        
-        #print(str(iteration) + "mF 2")
-        for i in range(len(diffrences)):
-            if diffrences[i] < minDiffrence:
-                pos = i
-                minDiffrence = diffrences[i]
-        #print(str(iteration) + "mF 3")
-
-        if minDiffrence > tolerance:
-            recalculate = False
-            break
-        #print(str(iteration) + "mF 4")
-        i = 0
-        while i < len(in_array):
-            if i == pos:
-                tmp = in_array[i]
-                tmpCounter.append(counter[i] + counter[i + 1])
-                for j in range(tmp.size):
-                    tmp[j] = (tmp[j] + in_array[i+1][j])
-                result.append(copy.deepcopy(tmp))
-                i += 2
-            else:
-                result.append(in_array[i])
-                tmpCounter.append(counter[i])
-                i += 1
-        in_array = copy.deepcopy(result)
-        #print("1Length in_array: " + str(len(in_array)) + " | optimalFrames: " + str(optimalFrames))
-        counter = copy.deepcopy(tmpCounter)
-        tmpCounter = []
-        result = []
-        if len(in_array) <= optimalFrames:
-            recalculate = False
-    #print("Length : " + str(len(result)))
-    for i in range(len(in_array)):
-        result.append(copy.deepcopy(in_array[i]/counter[i]))
-    return (result)
 
 # loads previously stored models
 cpdef np.ndarray loadModels(bint tmp = False):
@@ -323,58 +225,6 @@ cpdef np.ndarray loadActivatedModels():
             result.append(i)
     return np.asarray(result)
 
-# merges two models
-cpdef void modelMergeNew(tuple data) except *:
-    cdef list in_array = data[0]
-    cdef list minimalizedRecords = []
-    cdef int optimalFrames = data[1]
-    cdef str name = data[2]
-    cdef int iteration = data[3]
-    cdef list result
-    cdef CUINT64_t tolerance
-    cdef Py_ssize_t i
-    cdef Py_ssize_t pos
-    cdef Py_ssize_t j
-    #print(str(iteration) + " | process model that starts with " + str(in_array[0][0][0]))
-    in_array[0], tolerance = minimalizeAndCalcTolerance(in_array[0], optimalFrames, iteration)
-    #print(str(iteration) + " | Tolerance calculated: " + str(tolerance))
-    if tolerance != 0:
-        length = len(in_array)
-        #print(str(iteration) + " | length: " + str(length))
-        for i in range(1, length):
-            tmp = minimalizeFeatures(in_array[i], tolerance, optimalFrames, i)
-            #print(str(iteration) + " | i: " + str(i))
-            if len(tmp) > 0:
-                minimalizedRecords.append(tmp)
-        length = len(minimalizedRecords)
-        result = copy.deepcopy(in_array[0])
-        # counts on which position we are in a specific array
-        counter = np.zeros(length, dtype=int)
-        #print("Length result: " + str(len(result)))
-        # counts how many arrays influence the result frame
-        counterResult = np.ones(len(result), dtype=int)
-        # for every frame in result try if we find mergable frames
-        for pos in range(len(result)):
-            # we try all recordings
-            for i in range(length):
-                # we only try frames after the last merged frame from this
-                # recording
-                for j in range(counter[i], len(minimalizedRecords[i])):
-                    # if the average over all merged frames compared to the current
-                    # frame of the current model is under tolerance we merge the
-                    # current frame to the others
-                    if compare(np.asarray(in_array[0][pos], dtype=np.float64), minimalizedRecords[i][j]) < tolerance:
-                        result[pos] = np.add(result[pos], in_array[i + 1][j])
-                        counterResult[pos] += 1
-                        counter[i] = j
-        #print(str(iteration) + " | Sum calculated")
-        # calculate the average from the stored sum
-        for pos in range(len(result)):
-            result[pos] = np.asarray([(x / counterResult[pos]) for x in result[pos]], dtype=np.float64)
-        #print(str(iteration) + " | Average calculated")
-        tolerance /= conf.TOLERANCE_MULTIPLIER
-        print("Merged iteration " + str(iteration) + ", with " + str(length) + " records | Tolerance: " + str(tolerance))
-        storeModel(model.Model(result, tolerance, name, length), True, iteration)
 
 
 # stores a model at the modelFolder or in tmp folder
@@ -423,8 +273,7 @@ cpdef np.ndarray[CUINT64_t] processSpectrum(np.ndarray[CINT16_t] frame):
 # Preprocessing with Cepstrum
 cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
     cdef Py_ssize_t i
-    cdef np.ndarray[CUINT64_t] result = np.zeros(64, dtype=np.float64)
-    cdef Py_ssize_t k = 0
+    cdef np.ndarray[CUINT64_t] result = np.zeros(32, dtype=np.float64)
     cdef np.ndarray tmp = fft(frame)
     tmp = np.absolute(tmp)
     tmp[0] *= tmp[0]
@@ -435,9 +284,7 @@ cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
     tmp = ifft(tmp)
     tmp = np.absolute(np.split(tmp, 2)[0])
     for i in range(512):
-        result[k%16] += math.pow(tmp[i], 2)
-        k += 1
-    result = np.float64(result)
+        result[i/16] += math.pow(tmp[i], 2)
     return result
 
 

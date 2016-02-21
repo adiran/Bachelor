@@ -13,14 +13,11 @@ ctypedef np.float64_t CUINT64_t
 CINT16 = np.int16
 ctypedef np.int16_t CINT16_t
 
-def qualityCheck(tuple data):
+cpdef void qualityCheck(tuple data) except *:
     cdef model = data[0]
     cdef str fileName = data[1]
     cdef int counter = data[2]
-
-    print("QS Number: " + str(counter) + " | fileName: " + fileName)
-
-    cdef CUINT64_t tolerance = model.tolerance * conf.TOLERANCE_MULTIPLIER
+    cdef np.ndarray[CUINT64_t] tolerance = model.tolerance
     cdef list features = model.features
     cdef int wavenumber = 1
     cdef int result = 0
@@ -33,6 +30,9 @@ def qualityCheck(tuple data):
     cdef np.ndarray[CINT16_t] frame
     cdef np.ndarray[CUINT64_t] feature
     cdef CUINT64_t compared
+
+
+    print("QS Number: " + str(counter) + " | fileName: " + fileName)
 
     # do it while there are wave files
     while os.path.isfile(str(fileName) + "/" + str(wavenumber) + ".wav"):
@@ -59,17 +59,17 @@ def qualityCheck(tuple data):
                     
                     feature = f.process(frame)
                     compared = f.compare(features[modelPosition], feature)
-                   # print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance - compared))
-                    if compared < tolerance:
+                    #print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance[modelPosition] - compared))
+                    if compared < tolerance[modelPosition]:
                         recognized = True
                         frameCount = conf.FRAME_COUNT
                         #print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
                     # if we are not in the same frame of the model as last
                     # time we check if we are in the next frame
                     elif recognized:
-                        # print("length model: " + str(len(features)) + " | modelPosition + 1: " + str(modelPosition + 1))
+                        #print("length model: " + str(len(features)) + " | modelPosition + 1: " + str(modelPosition + 1))
                         # maby we are in the next model frame
-                        if f.compare(features[modelPosition + 1], feature) < tolerance:
+                        if f.compare(features[modelPosition + 1], feature) < tolerance[modelPosition]:
                             recognized = True
                             frameCount = conf.FRAME_COUNT
                             modelPosition += 1

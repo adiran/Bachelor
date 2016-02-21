@@ -75,7 +75,10 @@ class Model(object):
 
     def calculateScore(self):
         if self._matches >= 0:
-            self._score = float((float(self._matches) * float(self._influencedBy)) / float(self._tolerance))
+            tmpTolerance = 0.
+            for i in self._tolerance:
+                tmpTolerance += i/len(self._tolerance)
+            self._score = float((float(self._matches) * float(self._influencedBy)) / float(tmpTolerance))
 
     def activate(self):
         self._loaded = True

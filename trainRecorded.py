@@ -24,6 +24,7 @@ from scipy.fftpack import fft
 import functions as f
 import qualitycheck as q
 import interactions
+import model as modelImport
 
 
 
@@ -32,7 +33,9 @@ def modelMergeNew(data):
     f.modelMergeNew(model, minFrames, maxFrames, name, iteration)
 
 #@profile
-def preprocess(wf):
+def preprocess(in_data):
+    wf = in_data[0]
+    wavenumber = in_data[1]
     # check wether the wave file is mono or stereo
     if wf.getnchannels() == 1:
         loops = int(wf.getnframes() / conf.CHUNK)
@@ -57,6 +60,7 @@ def preprocess(wf):
 
             # free memory
             #gc.collect()
+        print("Processed file " + str(wavenumber) + ".wav")
         return number
     else:
         print("Stereo wave files are not supported yet")
@@ -77,84 +81,69 @@ def main():
     fileName, modelName, optimalFrames, iterations = interactions.getTrainParameters()
     
     # do it while there are wave files
-    
+    wf = []
     while os.path.isfile(str(fileName) + "/" + str(wavenumber) + ".wav"):
-        wf = wave.open(str(fileName) + "/" + str(wavenumber) + ".wav")
+        wf.append((wave.open(str(fileName) + "/" + str(wavenumber) + ".wav"), wavenumber))
         print("File " + str(fileName) + "/" + str(wavenumber) +
-                ".wav found. Processing it now...")
-        number = preprocess(wf)
-        #print("Number[0][0]: " + str(number[0][0]))
-        model.append(copy.deepcopy(number))
-        wf.close()
+                ".wav found.")
         wavenumber += 1
-
+    multipro = True
+    if multipro:
+        pool = multiprocessing.Pool(processes=4)
+        model = pool.map(preprocess, wf)
+    else:
+        for i in wf:
+            model.append(preprocess(i))
+    for i in wf:
+        i.close()
     if conf.ELIMINATE_BACKGROUND_NOISE:
         # TODO: bilde den durchschnitt der Hintergrundfrequenzen und ziehe diese von jeder aufnahme ab. Da fft sollten damit ja die Hintergrundfrequenzen ausgeloescht werden    
         print()
-
-    print("Processed files, free up memory.")
-
-
-    # the number of training files
     wavenumber -= 1
-    # free memory
-    gc.collect()
-
-    #h = hpy()
-    #print h.heap()
-
-    print("Type Model: " + str(type(model)))
-    print("Length Model: " + str(len(model)))
-    print("Type Model[0]: " + str(type(model[0])))
-    print("Length Model[0]: " + str(len(model[0])))
-    print("Type Model[0][0]: " + str(type(model[0][0])))
-    print("Length Model[0][0]: " + str(len(model[0][0])))
-    print("Type Model[0][0][0]: " + str(type(model[0][0][0])))
-    #print("Length Model[0][0][0]: " + str(len(model[0][0][0])))
-
-    print()
-    print("Compute " + str(iterations) +
-          " diffrent models.")
+    print("Processed " + str(wavenumber) + " files, minimalize them.")
 
     if model != []:
-        oldModelScore = -1
         data = []
-        minFramesList = []
-        maxFramesList = []
-        for i in range(iterations):
-            # free memory
-            #gc.collect()
-            print(i)
-            pos1 = copy.deepcopy(model[0])
-            model[0] = copy.deepcopy(model[i])
-            model[i] = pos1
-            #print("Pack data that beginns with: " + str(model[0][0][0]))
-            #print("Next record starts with: " + str(model[1][0]))
+        for i in range(wavenumber):
             data.append(
-                (copy.deepcopy(model),
+                (model[i],
                  optimalFrames,
-                 modelName,
                  i))
-
-        print("Length model: " + str(len(model)) + " | model[0]: " + str(len(model[0])) + " | model[0][0]: " + str(len(model[0][0])) + " | model[0][0][0]: " + str((model[0][0][0])))
         beginning = time.time()
         f.clearTmpFolder()
         #TODO just for testing drop that iout before finish
         multipro = True
+        print(str(len(data)))
         if multipro:
             pool = multiprocessing.Pool(processes=4)
-            pool.map(f.modelMergeNew, data)
+            dasReturnZeugs = pool.map(f.minimalizeAndCalcTolerance, data)
         else:
             for i in data:
                 f.modelMergeNew(i)
+        minimalizedRecords = []
+        calculatedTolerances = []
+        for i in dasReturnZeugs:
+            minimalizedRecords.append(i[0])
+            calculatedTolerances.append(i[1])
+
+        zeroFrame = np.zeros(32, dtype=np.float64)
+        models = []
+        for i in range(len(minimalizedRecords)):
+            features = copy.deepcopy(minimalizedRecords[i])
+            tmpFeatures = [copy.deepcopy(zeroFrame) for number in range(optimalFrames)]
+            tmpCounter = [1 for number in range(optimalFrames)]
+            for j in range(len(minimalizedRecords)):
+                for h in range(optimalFrames):
+                    if f.compare(minimalizedRecords[j][h], features[h]) < calculatedTolerances[i][h]:
+                        tmpFeatures[h] += minimalizedRecords[j][h]
+                        tmpCounter[h] += 1
+            for h in range(optimalFrames):
+                tmpFeatures[h] = np.divide(tmpFeatures[h], tmpCounter[h])
+            models.append(modelImport.Model(tmpFeatures, calculatedTolerances[i], modelName, 24))
+
 
         print()
-        print("Computed the models in " + str(time.time() - beginning) + " seconds. Load them for scoring. Don't worry this might take some time...")
-        print()
-        beginning = time.time()
-        models = f.loadModels(tmp=True)
-        print("Loaded " + str(len(models)) +
-              " models in " + str(time.time() - beginning) + " seconds. Compute their score.")
+        print("Computed the models in " + str(time.time() - beginning) + " seconds. Compute their score.")
         print()
         beginning = time.time()
         data = []
