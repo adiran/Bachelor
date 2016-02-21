@@ -32,11 +32,9 @@ def modelMergeNew(data):
     f.modelMergeNew(model, minFrames, maxFrames, name, iteration)
 
 #@profile
-def preprocess(wf, fileName, wavenumber):
+def preprocess(wf):
     # check wether the wave file is mono or stereo
     if wf.getnchannels() == 1:
-        print("File " + str(fileName) + "/" + str(wavenumber) +
-                ".wav found. Processing it now...")
         loops = int(wf.getnframes() / conf.CHUNK)
         framesAfterSound = conf.FRAMES_AFTER_SOUND
         number = []
@@ -82,7 +80,9 @@ def main():
     
     while os.path.isfile(str(fileName) + "/" + str(wavenumber) + ".wav"):
         wf = wave.open(str(fileName) + "/" + str(wavenumber) + ".wav")
-        number = preprocess(wf, fileName, wavenumber)
+        print("File " + str(fileName) + "/" + str(wavenumber) +
+                ".wav found. Processing it now...")
+        number = preprocess(wf)
         #print("Number[0][0]: " + str(number[0][0]))
         model.append(copy.deepcopy(number))
         wf.close()

@@ -4,42 +4,44 @@ import functions as f
 from scipy.fftpack import fft, ifft
 import config as conf
 import pyaudio
+import time
 import struct
 import copy
 import scipy.io.wavfile as scwave
+import trainRecorded as train
 
-p = pyaudio.PyAudio()
-RATE = int(p.get_device_info_by_index(conf.DEVICE_INDEX)['defaultSampleRate'])
+for i in range(1, 26):
+    wf = wave.open("records/microwave/" + str(i) + ".wav")
+    number = train.preprocess(wf)
+    print("\t\tstart new minimalizeAndCalcTolerance")
+    beginning = time.time()
+    f.minimalizeAndCalcTolerance(number, 5, 1)
+    print("\t\tfinished after " + str(time.time() - beginning))
+    print("\t\tstart old minimalizeAndCalcTolerance")
+    beginning = time.time()
+    f.minimalizeAndCalcTolerance1(number, 5, 1)
+    print("\t\tfinished after " + str(time.time() - beginning))
 
-backgroundNoise = np.zeros(1024, dtype=np.complex128)
-wf = wave.open("records/microwave/backgroundNoise.wav")
-sampwidth = wf.getsampwidth()
-loops = int(wf.getnframes() / 1024)
-for i in range(loops):
-    framesAsString = wf.readframes(1024)
-    frame = np.fromstring(framesAsString, np.int16)
-    frame = fft(frame)
-    for j in range(1024):
-        backgroundNoise[j] += frame[j] / loops
+for i in range(1, 26):
+    wf = wave.open("records/whistleOneTone/" + str(i) + ".wav")
+    number = train.preprocess(wf)
+    print("\t\tstart new minimalizeAndCalcTolerance")
+    beginning = time.time()
+    f.minimalizeAndCalcTolerance(number, 5, 1)
+    print("\t\tfinished after " + str(time.time() - beginning))
+    print("\t\tstart old minimalizeAndCalcTolerance")
+    beginning = time.time()
+    f.minimalizeAndCalcTolerance1(number, 5, 1)
+    print("\t\tfinished after " + str(time.time() - beginning))
 
-
-wf = wave.open("records/microwave/1.wav")
-loops = int(wf.getnframes() / 1024)
-noiseFree = []
-for i in range(loops):
-    #print(i)
-    framesAsString = wf.readframes(1024)
-    frame = np.fromstring(framesAsString, np.int16)
-    print(str(frame))
-    frame = fft(frame)
-    for j in range(1024):
-        frame[j] -= backgroundNoise[j]
-    noiseFree.append(frame)
-print("--------------------------------------------------------------------------------------------")
-result = np.empty(loops*1024, dtype=np.int16)
-for i in range(loops):
-    noiseFree[i] = np.int16(ifft(noiseFree[i]).real)
-    print(str(noiseFree[i]))
-    for j in range(1024):
-        result[i*1024 + j] = noiseFree[i][j]
-scwave.write("tmp/tmp.wav", RATE, result)
+for i in range(1, 26):
+    wf = wave.open("records/closeDoor/" + str(i) + ".wav")
+    number = train.preprocess(wf)
+    print("\t\tstart new minimalizeAndCalcTolerance")
+    beginning = time.time()
+    f.minimalizeAndCalcTolerance(number, 5, 1)
+    print("\t\tfinished after " + str(time.time() - beginning))
+    print("\t\tstart old minimalizeAndCalcTolerance")
+    beginning = time.time()
+    f.minimalizeAndCalcTolerance1(number, 5, 1)
+    print("\t\tfinished after " + str(time.time() - beginning))
