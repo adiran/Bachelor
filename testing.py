@@ -12,39 +12,75 @@ import trainRecorded as train
 
 import sys
 
-if False:
-    for i in range(1, 26):
+
+def printmodel(model):
+    print("\nLength: " +str(len(model)) + "\n")
+    for i in range(32):
+        for j in range(len(model) - 1):
+            sys.stdout.write(str(model[j][i]) + "\t")
+        print(model[4][i])
+    print("\n")
+
+if True:
+    for i in range(1, 3):
         wf = wave.open("records/microwave/" + str(i) + ".wav")
-        number = train.preprocess(wf)
+        number = train.preprocess((wf, 0))
         print("\t\tstart new minimalizeAndCalcTolerance")
         beginning = time.time()
-        f.minimalizeAndCalcTolerance(number, 5, 1)
-        print("\t\tfinished after " + str(time.time() - beginning))
-        print("\t\tstart old minimalizeAndCalcTolerance")
-        beginning = time.time()
-        f.minimalizeAndCalcTolerance1(number, 5, 1)
+        model, tolerances = f.minimalizeAndCalcTolerance((number, 5, 1))
+        printmodel(model)
+        print("Tolerances: " + str(tolerances))
         print("\t\tfinished after " + str(time.time() - beginning))
 if True:
-    for i in range(1, 6):
+    for i in range(1, 3):
         wf = wave.open("records/whistleOneTone/" + str(i) + ".wav")
-        number = train.preprocess(wf)
+        number = train.preprocess((wf, 0))
         print("\t\tstart new minimalizeAndCalcTolerance")
         beginning = time.time()
-        print("MaxDiffrence: " + str(f.minimalizeAndCalcTolerance(number, 5, 1)[1]))
+        model, tolerances = f.minimalizeAndCalcTolerance((number, 5, 1))
+        printmodel(model)
+        print("Tolerances: " + str(tolerances))
         print("\t\tfinished after " + str(time.time() - beginning))
-        #print("\t\tstart old minimalizeAndCalcTolerance")
-        #beginning = time.time()
-        #f.minimalizeAndCalcTolerance1(number, 5, 1)
-        #print("\t\tfinished after " + str(time.time() - beginning))
-if False:
-    for i in range(1, 26):
+if True:
+    for i in range(1, 3):
         wf = wave.open("records/closeDoor/" + str(i) + ".wav")
-        number = train.preprocess(wf)
+        number = train.preprocess((wf, 0))
         print("\t\tstart new minimalizeAndCalcTolerance")
         beginning = time.time()
-        f.minimalizeAndCalcTolerance(number, 5, 1)
+        model, tolerances = f.minimalizeAndCalcTolerance((number, 5, 1))
+        printmodel(model)
+        print("Tolerances: " + str(tolerances))
         print("\t\tfinished after " + str(time.time() - beginning))
-        print("\t\tstart old minimalizeAndCalcTolerance")
+
+conf.FREQUENCY_BAND_TRAINING = True
+print("-------------------------------------------------------------")
+if True:
+    for i in range(1, 3):
+        wf = wave.open("records/microwave/" + str(i) + ".wav")
+        number = train.preprocess((wf, 0))
+        print("\t\tstart new minimalizeAndCalcTolerance")
         beginning = time.time()
-        f.minimalizeAndCalcTolerance1(number, 5, 1)
+        model, tolerances = f.minimalizeAndCalcTolerance((number, 5, 1))
+        #printmodel(model)
+        print("Tolerances: " + str(tolerances))
+        print("\t\tfinished after " + str(time.time() - beginning))
+if True:
+    for i in range(1, 3):
+        wf = wave.open("records/whistleOneTone/" + str(i) + ".wav")
+        number = train.preprocess((wf, 0))
+        print("\t\tstart new minimalizeAndCalcTolerance")
+        beginning = time.time()
+        model, tolerances = f.minimalizeAndCalcTolerance((number, 5, 1))
+        #printmodel(model)
+        print("Tolerances: " + str(tolerances))
+        print("\t\tfinished after " + str(time.time() - beginning))
+if True:
+    for i in range(1, 3):
+        wf = wave.open("records/closeDoor/" + str(i) + ".wav")
+        number = train.preprocess((wf, 0))
+        print("\t\tstart new minimalizeAndCalcTolerance")
+        beginning = time.time()
+        model, tolerances = f.minimalizeAndCalcTolerance((number, 5, 1))
+        #printmodel(model)
+        print("Tolerances: " + str(tolerances))
         print("\t\tfinished after " + str(time.time() - beginning))

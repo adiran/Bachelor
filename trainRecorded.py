@@ -79,7 +79,7 @@ def main():
     wavenumber = 1
     # TODO just for testing. recordsName as method argument needed
     fileName, modelName, optimalFrames, iterations = interactions.getTrainParameters()
-    
+    beginning = time.time()
     # do it while there are wave files
     wf = []
     while os.path.isfile(str(fileName) + "/" + str(wavenumber) + ".wav"):
@@ -87,7 +87,7 @@ def main():
         print("File " + str(fileName) + "/" + str(wavenumber) +
                 ".wav found.")
         wavenumber += 1
-    multipro = True
+    multipro = False
     if multipro:
         pool = multiprocessing.Pool(processes=4)
         model = pool.map(preprocess, wf)
@@ -95,12 +95,12 @@ def main():
         for i in wf:
             model.append(preprocess(i))
     for i in wf:
-        i.close()
+        i[0].close()
     if conf.ELIMINATE_BACKGROUND_NOISE:
         # TODO: bilde den durchschnitt der Hintergrundfrequenzen und ziehe diese von jeder aufnahme ab. Da fft sollten damit ja die Hintergrundfrequenzen ausgeloescht werden    
         print()
     wavenumber -= 1
-    print("Processed " + str(wavenumber) + " files, minimalize them.")
+    print("Processed " + str(wavenumber) + " files in " + str(time.time() - beginning) + " seconds, minimalize them.")
 
     if model != []:
         data = []
@@ -126,12 +126,12 @@ def main():
             minimalizedRecords.append(i[0])
             calculatedTolerances.append(i[1])
 
-        zeroFrame = np.zeros(32, dtype=np.float64)
+        zeroFrame = np.zeros(conf.FEATURES_PER_FRAME, dtype=np.float64)
         models = []
         for i in range(len(minimalizedRecords)):
             features = copy.deepcopy(minimalizedRecords[i])
             tmpFeatures = [copy.deepcopy(zeroFrame) for number in range(optimalFrames)]
-            tmpCounter = [1 for number in range(optimalFrames)]
+            tmpCounter = [0 for number in range(optimalFrames)]
             for j in range(len(minimalizedRecords)):
                 for h in range(optimalFrames):
                     if f.compare(minimalizedRecords[j][h], features[h]) < calculatedTolerances[i][h]:

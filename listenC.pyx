@@ -101,9 +101,9 @@ cpdef listen(in_data):
             data = f.process(frame)
     #        print("number.append(f.extractFeatures(data[0]))")
             for i in range(models.size):
-                if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:
+                if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:
                     frameCount[i] = conf.FRAME_COUNT
-                elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:
+                elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:
                     modelPosition[i] += 1
                     print("Recognized " + str(modelPosition[i]) + ". frame.")
                     frameCount[i] = conf.FRAME_COUNT

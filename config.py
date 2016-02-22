@@ -55,10 +55,13 @@ MIN_FRAMES = 3
 ELIMINATE_BACKGROUND_NOISE = True
 
 # Set to True to train a model with only FREQUENCY_BANDS_TO_COMPARE frequency Bands
-FREQUENCY_BAND_TRAINING = False
+FREQUENCY_BAND_TRAINING = True
 
-# If FREQUENCY_BAND_TRAINING is True only the specified number of frequency bands are compared
-FREQUENCY_BANDS_TO_COMPARE = 16
+# If FREQUENCY_BAND_TRAINING is True only the specified number of frequency bands are dropped
+FREQUENCY_BANDS_TO_DROP = 16
 
 # The number of frames that should be skipped after a recognition
 SKIP_AFTER_RECOGNITION = 10
+
+# The number of features in a frame; should be a power of two
+FEATURES_PER_FRAME = 64

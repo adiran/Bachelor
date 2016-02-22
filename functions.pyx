@@ -37,9 +37,9 @@ cpdef CUINT64_t compare(np.ndarray[CUINT64_t] recordData, np.ndarray[CUINT64_t] 
     cdef CUINT64_t tmp2
     if len(recordData) == len(modelData):
         for i in range(len(recordData)):
-            tmp2 = <CUINT64_t>abs(modelData[i])
+            tmp2 = modelData[i]
             if math.isnan(tmp2) == False:
-                tmp1 = <CUINT64_t>abs(recordData[i])
+                tmp1 = recordData[i]
                 if tmp1 > tmp2:
                     result += tmp1 - tmp2
                 else:
@@ -58,6 +58,7 @@ cpdef tuple minimalizeAndCalcTolerance(tuple in_data):
     cdef list diffrences = []
     cdef CUINT64_t diffrence = 0.
     cdef CUINT64_t compared = 0.
+    cdef CUINT64_t minValue = 0.
     cdef Py_ssize_t i = 0
     cdef Py_ssize_t j = 0
     cdef Py_ssize_t pos = 0
@@ -72,6 +73,7 @@ cpdef tuple minimalizeAndCalcTolerance(tuple in_data):
     cdef int counterAfter = 0
     cdef int tmpFrameMember = 0
     cdef int tmpFrameMemberBeforeAfter = 0
+    cdef int features_per_frame = conf.FEATURES_PER_FRAME
     cdef np.ndarray[CUINT64_t] tmpFrame = np.zeros_like(in_array[0], dtype=np.float64)
     cdef np.ndarray[CUINT64_t] tmpFrameBefore = np.zeros_like(in_array[0], dtype=np.float64)
     cdef np.ndarray[CUINT64_t] tmpFrameAfter = np.zeros_like(in_array[0], dtype=np.float64)
@@ -181,8 +183,32 @@ cpdef tuple minimalizeAndCalcTolerance(tuple in_data):
             counter = counterFrames[j] - 1
     result.append(tmpFrame)
     if conf.FREQUENCY_BAND_TRAINING:
-        #TODO
-        print("Not Yet implementatet")
+        for i in range(optimalFrames):
+            counter = conf.FREQUENCY_BANDS_TO_DROP
+            tmpFrame = result[i]
+            while counter > 0:
+                counter -= 1
+                for j in range(features_per_frame):
+                    if math.isnan(tmpFrame[j]) == False:    
+                        minValue = tmpFrame[j]
+                        posBeg = j
+                        break
+                for j in range(features_per_frame):
+                    if math.isnan(tmpFrame[j]) == False:
+                        if tmpFrame[j] < minValue:
+                            minValue = tmpFrame[j]
+                            posBeg = j
+                tmpFrame[posBeg] = np.nan
+            result[i] = copy.deepcopy(tmpFrame)
+        posBeg = 0
+        tmpFrameMember = frameMember[0]
+        for i in range(len(in_array)):
+            if frameMember[i] != tmpFrameMember:
+                tmpFrameMember = frameMember[i]
+                posBeg += 1
+            for j in range(features_per_frame):
+                if math.isnan(result[posBeg][j]):
+                    in_array[i][j] = np.nan
     j = 0
     for i in range(len(in_array) - 1):
         if frameMember[i] == frameMember[i + 1]:
@@ -273,7 +299,8 @@ cpdef np.ndarray[CUINT64_t] processSpectrum(np.ndarray[CINT16_t] frame):
 # Preprocessing with Cepstrum
 cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
     cdef Py_ssize_t i
-    cdef np.ndarray[CUINT64_t] result = np.zeros(32, dtype=np.float64)
+    cdef int features_per_frame = conf.FEATURES_PER_FRAME
+    cdef np.ndarray[CUINT64_t] result = np.zeros(features_per_frame, dtype=np.float64)
     cdef np.ndarray tmp = fft(frame)
     tmp = np.absolute(tmp)
     tmp[0] *= tmp[0]
@@ -284,7 +311,7 @@ cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
     tmp = ifft(tmp)
     tmp = np.absolute(np.split(tmp, 2)[0])
     for i in range(512):
-        result[i/16] += math.pow(tmp[i], 2)
+        result[i/(512/features_per_frame)] += math.pow(tmp[i], 2)
     return result
 
 

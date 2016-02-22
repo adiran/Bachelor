@@ -32,7 +32,7 @@ cpdef void qualityCheck(tuple data) except *:
     cdef CUINT64_t compared
 
 
-    print("QS Number: " + str(counter) + " | fileName: " + fileName)
+    #print("QS Number: " + str(counter) + " | fileName: " + fileName)
 
     # do it while there are wave files
     while os.path.isfile(str(fileName) + "/" + str(wavenumber) + ".wav"):
@@ -58,7 +58,7 @@ cpdef void qualityCheck(tuple data) except *:
                         frame, np.fromstring(framesAsString, np.int16))
                     
                     feature = f.process(frame)
-                    compared = f.compare(features[modelPosition], feature)
+                    compared = f.compare(feature, features[modelPosition])
                     #print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance[modelPosition] - compared))
                     if compared < tolerance[modelPosition]:
                         recognized = True
@@ -69,12 +69,12 @@ cpdef void qualityCheck(tuple data) except *:
                     elif recognized:
                         #print("length model: " + str(len(features)) + " | modelPosition + 1: " + str(modelPosition + 1))
                         # maby we are in the next model frame
-                        if f.compare(features[modelPosition + 1], feature) < tolerance[modelPosition]:
+                        if f.compare(feature, features[modelPosition + 1]) < tolerance[modelPosition + 1]:
                             recognized = True
                             frameCount = conf.FRAME_COUNT
                             modelPosition += 1
                             #print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
-                            # recognized last frame of the features. Print it
+                            ## recognized last frame of the features. Print it
                             # and reset featuresNumber and modelPosition
                             if modelPosition == (len(features) - 1):
                                 result += 1
@@ -86,6 +86,7 @@ cpdef void qualityCheck(tuple data) except *:
                                 frameCount -= 1
                             else:
                                 recognized = False
+                                modelPosition = 0
         wavenumber += 1
         wf.close()
     model.matches = result

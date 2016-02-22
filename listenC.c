@@ -2441,7 +2441,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
  *             data = f.process(frame)
  *     #        print("number.append(f.extractFeatures(data[0]))")
  *             for i in range(models.size):             # <<<<<<<<<<<<<<
- *                 if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:
+ *                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:
  *                     frameCount[i] = conf.FRAME_COUNT
  */
       __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_models); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -2503,9 +2503,9 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
         /* "listenC.pyx":104
  *     #        print("number.append(f.extractFeatures(data[0]))")
  *             for i in range(models.size):
- *                 if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
+ *                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
  *                     frameCount[i] = conf.FRAME_COUNT
- *                 elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:
+ *                 elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:
  */
         __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_f); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 104; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_GOTREF(__pyx_t_4);
@@ -2546,11 +2546,11 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
         if (__pyx_t_8) {
           __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_8); __pyx_t_8 = NULL;
         }
-        __Pyx_GIVEREF(__pyx_t_5);
-        PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_17, __pyx_t_5);
         __Pyx_INCREF(((PyObject *)__pyx_v_data));
         __Pyx_GIVEREF(((PyObject *)__pyx_v_data));
-        PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_17, ((PyObject *)__pyx_v_data));
+        PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_17, ((PyObject *)__pyx_v_data));
+        __Pyx_GIVEREF(__pyx_t_5);
+        PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_17, __pyx_t_5);
         __pyx_t_5 = 0;
         __pyx_t_10 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_4, NULL); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 104; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_GOTREF(__pyx_t_10);
@@ -2582,9 +2582,9 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
 
           /* "listenC.pyx":105
  *             for i in range(models.size):
- *                 if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:
+ *                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:
  *                     frameCount[i] = conf.FRAME_COUNT             # <<<<<<<<<<<<<<
- *                 elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:
+ *                 elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:
  *                     modelPosition[i] += 1
  */
           __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_conf); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 105; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -2601,17 +2601,17 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
           /* "listenC.pyx":104
  *     #        print("number.append(f.extractFeatures(data[0]))")
  *             for i in range(models.size):
- *                 if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
+ *                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
  *                     frameCount[i] = conf.FRAME_COUNT
- *                 elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:
+ *                 elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:
  */
           goto __pyx_L7;
         }
 
         /* "listenC.pyx":106
- *                 if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:
+ *                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:
  *                     frameCount[i] = conf.FRAME_COUNT
- *                 elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
+ *                 elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
  *                     modelPosition[i] += 1
  *                     print("Recognized " + str(modelPosition[i]) + ". frame.")
  */
@@ -2657,11 +2657,11 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
         if (__pyx_t_7) {
           __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_7); __pyx_t_7 = NULL;
         }
-        __Pyx_GIVEREF(__pyx_t_8);
-        PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_17, __pyx_t_8);
         __Pyx_INCREF(((PyObject *)__pyx_v_data));
         __Pyx_GIVEREF(((PyObject *)__pyx_v_data));
-        PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_17, ((PyObject *)__pyx_v_data));
+        PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_17, ((PyObject *)__pyx_v_data));
+        __Pyx_GIVEREF(__pyx_t_8);
+        PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_17, __pyx_t_8);
         __pyx_t_8 = 0;
         __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 106; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_GOTREF(__pyx_t_4);
@@ -2693,7 +2693,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
 
           /* "listenC.pyx":107
  *                     frameCount[i] = conf.FRAME_COUNT
- *                 elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:
+ *                 elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:
  *                     modelPosition[i] += 1             # <<<<<<<<<<<<<<
  *                     print("Recognized " + str(modelPosition[i]) + ". frame.")
  *                     frameCount[i] = conf.FRAME_COUNT
@@ -2716,7 +2716,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
           __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
           /* "listenC.pyx":108
- *                 elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:
+ *                 elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:
  *                     modelPosition[i] += 1
  *                     print("Recognized " + str(modelPosition[i]) + ". frame.")             # <<<<<<<<<<<<<<
  *                     frameCount[i] = conf.FRAME_COUNT
@@ -3039,9 +3039,9 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
           }
 
           /* "listenC.pyx":106
- *                 if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:
+ *                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:
  *                     frameCount[i] = conf.FRAME_COUNT
- *                 elif f.compare(models[i].features[modelPosition[i] + 1], data) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
+ *                 elif f.compare(data, models[i].features[modelPosition[i] + 1]) < models[i].tolerance[modelPosition[i]]:             # <<<<<<<<<<<<<<
  *                     modelPosition[i] += 1
  *                     print("Recognized " + str(modelPosition[i]) + ". frame.")
  */
@@ -3122,7 +3122,7 @@ static PyObject *__pyx_f_7listenC_listen(PyObject *__pyx_v_in_data, CYTHON_UNUSE
  *             data = f.process(frame)
  *     #        print("number.append(f.extractFeatures(data[0]))")
  *             for i in range(models.size):             # <<<<<<<<<<<<<<
- *                 if f.compare(models[i].features[modelPosition[i]], data) < models[i].tolerance[modelPosition[i]]:
+ *                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:
  *                     frameCount[i] = conf.FRAME_COUNT
  */
       }
