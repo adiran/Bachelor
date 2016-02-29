@@ -78,35 +78,21 @@ def getTrainParameters():
                 print("That was not a number.")
 
     print()
-    print("How many models should be computed and compaired? Maximum is " +
-          str(recordNumber) + ".")
-    isUserInputNotANumber = True
-    iterations = recordNumber
-    while isUserInputNotANumber:
-        userInput = raw_input(
-            "Input number of computations or nothing for maximum (" +
-            str(recordNumber) +
-            ")?")
-        if userInput != "":
-            try:
-                tmpIterations = int(userInput)
-                if tmpIterations > 0:
-                    isUserInputNotANumber = False
-                    if tmpIterations > recordNumber:
-                        print(
-                            "It would have no effect to train more models than " +
-                            str(recordNumber) +
-                            ", so we compute no more")
-                    else:
-                        iterations = tmpIterations
-                else:
-                    print("Number should be greater 0")
-            except ValueError:
-                print("That was not a number")
+    print("Where is the python script that should be executed after recognizing this model?.")
+    isUserInputWrong = True
+    scriptpath = None
+    while isUserInputWrong:
+        scriptpath = raw_input(
+            "Path to the script file: ")
+        if scriptpath != "":
+            if os.path.isfile(str(scriptpath)):
+                isUserInputWrong = False
+            else:
+                print("It seems that there is no file at " + str(scriptpath) + ".")
         else:
-            isUserInputNotANumber = False
+            print("Please type in a path.")
 
-    return(fileName, modelName, optimalFrames, iterations)
+    return(fileName, modelName, optimalFrames, scriptpath)
 
 
 def getModelNumber(maxModelNumber):

@@ -1,5 +1,6 @@
 import copy
 import numpy as np
+import os
 
 import functions as f
 
@@ -12,15 +13,17 @@ class Model(object):
     _name = None
     _score = -1.0
     _matches = -1
-    _influencedBy = 0
+    _influencedBy = []
     _loaded = False
+    _script = None
 
-    def __init__(self, features, tolerance, name, influencedBy):
+    def __init__(self, features, tolerance, name, influencedBy, script):
         self.features = features
         self.extractedFeatures = copy.deepcopy(features)
         self.tolerance = tolerance
         self.name = name
         self.influencedBy = influencedBy
+        self.script = script
    
     @property
     def features(self):
@@ -49,6 +52,13 @@ class Model(object):
     @property
     def loaded(self):
         return copy.deepcopy(self._loaded)
+
+    @property
+    def script(self):
+        if os.path.isfile(self._script):
+            return copy.deepcopy(self._script)
+        else:
+            return None
     
     @features.setter
     def features(self, features):
@@ -73,12 +83,22 @@ class Model(object):
     def influencedBy(self, influencedBy):
         self._influencedBy = influencedBy
 
+    @script.setter
+    def script(self, script):
+        if os.path.isfile(script):
+            self._script = script
+        else:
+            self._script = None
+
     def calculateScore(self):
         if self._matches >= 0:
             tmpTolerance = 0.
+            tmpInfluenceCounter = 0.
             for i in self._tolerance:
                 tmpTolerance += i/len(self._tolerance)
-            self._score = float((float(self._matches) * float(self._influencedBy)) / float(tmpTolerance))
+            for i in self._influencedBy:
+                tmpInfluenceCounter += i/len(self._influencedBy)
+            self._score = float((float(self._matches) * float(tmpInfluenceCounter)) / float(tmpTolerance))
 
     def activate(self):
         self._loaded = True

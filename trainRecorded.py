@@ -39,7 +39,6 @@ def preprocess(in_data):
     # check wether the wave file is mono or stereo
     if wf.getnchannels() == 1:
         loops = int(wf.getnframes() / conf.CHUNK)
-        framesAfterSound = conf.FRAMES_AFTER_SOUND
         number = []
         switch = True
         for i in range(loops):
@@ -52,7 +51,13 @@ def preprocess(in_data):
                 frame = np.append(
                     frame, np.fromstring(framesAsString, np.int16))
                 #print("1 Length frame: " + str(len(frame)) + " | frame[0]: " + str(frame[0]))
-                frame = f.process(frame)
+                if conf.CEPSTRUM:
+                    if conf.LIFTERING:
+                        frame = f.processCepsLiftering(frame)
+                    else:
+                        frame = f.processCepstrum(frame)
+                else:
+                    frame = f.processSpectrum(frame)
                 #print("2 Length frame: " + str(len(frame)) + " | frame[0]: " + str(frame[0]))
                 number.append(frame)
                 switch = True
@@ -78,7 +83,7 @@ def main():
     model = []
     wavenumber = 1
     # TODO just for testing. recordsName as method argument needed
-    fileName, modelName, optimalFrames, iterations = interactions.getTrainParameters()
+    fileName, modelName, optimalFrames, scriptpath = interactions.getTrainParameters()
     beginning = time.time()
     # do it while there are wave files
     wf = []
@@ -96,9 +101,6 @@ def main():
             model.append(preprocess(i))
     for i in wf:
         i[0].close()
-    if conf.ELIMINATE_BACKGROUND_NOISE:
-        # TODO: bilde den durchschnitt der Hintergrundfrequenzen und ziehe diese von jeder aufnahme ab. Da fft sollten damit ja die Hintergrundfrequenzen ausgeloescht werden    
-        print()
     wavenumber -= 1
     print("Processed " + str(wavenumber) + " files in " + str(time.time() - beginning) + " seconds, minimalize them.")
 
@@ -107,8 +109,7 @@ def main():
         for i in range(wavenumber):
             data.append(
                 (model[i],
-                 optimalFrames,
-                 i))
+                 optimalFrames))
         beginning = time.time()
         f.clearTmpFolder()
         #TODO just for testing drop that iout before finish
@@ -128,18 +129,31 @@ def main():
 
         zeroFrame = np.zeros(conf.FEATURES_PER_FRAME, dtype=np.float64)
         models = []
+        #for i in range(len(minimalizedRecords)):
+            #for j in range(optimalFrames):
+                #print("Iteration: " + str(i) + "| Frame: " + str(j) + " | tolerance: " + str(calculatedTolerances[0][j]) + " | compared: " + str(f.compare(minimalizedRecords[i][j], minimalizedRecords[0][j], debug=True)))
         for i in range(len(minimalizedRecords)):
             features = copy.deepcopy(minimalizedRecords[i])
             tmpFeatures = [copy.deepcopy(zeroFrame) for number in range(optimalFrames)]
             tmpCounter = [0 for number in range(optimalFrames)]
-            for j in range(len(minimalizedRecords)):
-                for h in range(optimalFrames):
+            counter = 0.
+            posCounter = [0 for number in range(len(minimalizedRecords))]
+            # for every frame in this record try if we find mergable frames
+            for h in range(optimalFrames):    
+                # we try all recordings
+                for j in range(len(minimalizedRecords)):
+                    #for k in range(posCounter[j], optimalFrames):
                     if f.compare(minimalizedRecords[j][h], features[h]) < calculatedTolerances[i][h]:
                         tmpFeatures[h] += minimalizedRecords[j][h]
+                        #posCounter[j] = k + 1
                         tmpCounter[h] += 1
             for h in range(optimalFrames):
                 tmpFeatures[h] = np.divide(tmpFeatures[h], tmpCounter[h])
-            models.append(modelImport.Model(tmpFeatures, calculatedTolerances[i], modelName, 24))
+                print("Iteration: " + str(i) + " | tmpCounter[" + str(h) + "]: " + str(tmpCounter[h]))
+                counter += tmpCounter[h]
+            counter /= optimalFrames
+            print("Iteration: " + str(i) + " | counter: " + str(counter))
+            models.append(modelImport.Model(tmpFeatures, calculatedTolerances[i], modelName, tmpCounter, scriptpath))
 
 
         print()

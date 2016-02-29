@@ -35,9 +35,6 @@ def main():
     # wait to prevent to capture the hitting of enter key
     time.sleep(.08)
 
-    # TODO just for testing, set up time
-    listenC.beginning()
-
     # open audio stream with callback function
     stream = p.open(format=conf.FORMAT,
                     channels=conf.CHANNELS,

@@ -1,7 +1,7 @@
 import numpy as np
 cimport numpy as np
 from scipy.fftpack import rfft
-import time as timebib
+from subprocess import call
 
 
 #own imports
@@ -26,6 +26,7 @@ cpdef setup():
     global switch
     global frame
     global recognition
+    global cepstrum
 
     # counter of frames that should be ignored after recognition
     recognition = 0
@@ -69,12 +70,9 @@ cpdef setup():
     # used for storing half of a frame because of the switch
     frame = []
 
+    # wether Cepstrum or Spectrum should be used for Feature Extraction
+    cepstrum = conf.CEPSTRUM
 
-cpdef beginning():
-    global beginning_time
-
-    # TODO just for testing
-    beginning_time = timebib.time()
 
 cpdef listen(in_data):
     cdef np.ndarray[CUINT64_t] data
@@ -98,7 +96,10 @@ cpdef listen(in_data):
     #        print("frame = np.append(frame, np.fromstring(in_data, np.int16))")
             frame = np.append(frame, np.fromstring(in_data, np.int16))
     #        print("data = np.abs(np.split(fft(frame), 2))")
-            data = f.process(frame)
+            if cepstrum:
+                data = f.processCepstrum(frame)
+            else:
+                data = f.processSpectrum(frame)
     #        print("number.append(f.extractFeatures(data[0]))")
             for i in range(models.size):
                 if f.compare(data, models[i].features[modelPosition[i]]) < models[i].tolerance[modelPosition[i]]:
@@ -108,11 +109,7 @@ cpdef listen(in_data):
                     print("Recognized " + str(modelPosition[i]) + ". frame.")
                     frameCount[i] = conf.FRAME_COUNT
                     if modelPosition[i] == (len(models[i].features) - 1):
-                        global beginning_time
-                        recognizeTime = int(timebib.time() - beginning_time)
-                        recognizeTimeMinutes = int(recognizeTime / 60)
-                        recognizeTime -= recognizeTimeMinutes * 60
-                        print("Recognized model " + models[i].name + " after " + str(recognizeTimeMinutes) + ":" + str(recognizeTime) + ".")
+                        call(["python2.7", str(models[i].script), str(models[i].name)])
                         modelPosition = np.zeros_like(models)
                         frameCount = np.zeros_like(models)
                         recognition = conf.SKIP_AFTER_RECOGNITION

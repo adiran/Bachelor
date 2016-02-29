@@ -30,6 +30,7 @@ cpdef void qualityCheck(tuple data) except *:
     cdef np.ndarray[CINT16_t] frame
     cdef np.ndarray[CUINT64_t] feature
     cdef CUINT64_t compared
+    cdef cepstrum = conf.CEPSTRUM
 
 
     #print("QS Number: " + str(counter) + " | fileName: " + fileName)
@@ -57,7 +58,10 @@ cpdef void qualityCheck(tuple data) except *:
                     frame = np.append(
                         frame, np.fromstring(framesAsString, np.int16))
                     
-                    feature = f.process(frame)
+                    if cepstrum:
+                        feature = f.processCepstrum(frame)
+                    else:
+                        feature = f.processSpectrum(frame)
                     compared = f.compare(feature, features[modelPosition])
                     #print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance[modelPosition] - compared))
                     if compared < tolerance[modelPosition]:

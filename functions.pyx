@@ -31,7 +31,7 @@ ctypedef np.int16_t CINT16_t
 
 
 cpdef CUINT64_t compare(np.ndarray[CUINT64_t] recordData, np.ndarray[CUINT64_t] modelData):
-    cdef CUINT64_t result = 0
+    cdef CUINT64_t result = 0.
     cdef Py_ssize_t i
     cdef CUINT64_t tmp1
     cdef CUINT64_t tmp2
@@ -40,6 +40,8 @@ cpdef CUINT64_t compare(np.ndarray[CUINT64_t] recordData, np.ndarray[CUINT64_t] 
             tmp2 = modelData[i]
             if math.isnan(tmp2) == False:
                 tmp1 = recordData[i]
+                if math.isnan(tmp1):
+                    tmp1 = 0.
                 if tmp1 > tmp2:
                     result += tmp1 - tmp2
                 else:
@@ -49,11 +51,11 @@ cpdef CUINT64_t compare(np.ndarray[CUINT64_t] recordData, np.ndarray[CUINT64_t] 
         result = 18446744073709551615
     return result
 
+# minimalizes a features extracted from a record and calculates the threshold
 
-cpdef tuple minimalizeAndCalcTolerance(tuple in_data):
+cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
     cdef list in_array = copy.deepcopy(in_data[0])
     cdef int optimalFrames = in_data[1]
-    cdef int iteration = in_data[2]
     cdef list frameMember = []
     cdef list diffrences = []
     cdef CUINT64_t diffrence = 0.
@@ -117,7 +119,6 @@ cpdef tuple minimalizeAndCalcTolerance(tuple in_data):
                 break
         tmpFrameMember = frameMember[pos]
         diffrences[pos] = np.finfo(np.float64).max
-        #print("Set diffrences[" + str(pos) + "] to " + str(diffrences[pos]))
         for i in range(len(in_array)):
             if frameMember[i] < tmpFrameMember:
                 if tmpFrameMemberBeforeAfter == frameMember[i]:
@@ -223,7 +224,7 @@ cpdef tuple minimalizeAndCalcTolerance(tuple in_data):
     if resultTolerance[optimalFrames - 1] == 0.:
         resultTolerance[optimalFrames - 1] = maxDiffrence
     for i in range(optimalFrames):
-        resultTolerance[i] = (resultTolerance[i] + maxDiffrence)/2.
+        resultTolerance[i] = (resultTolerance[i] + maxDiffrence)/2
     return (result, resultTolerance)
 
 
@@ -292,12 +293,16 @@ cpdef void clearTmpFolder() except *:
 # Preprocessing with Spectrum
 cpdef np.ndarray[CUINT64_t] processSpectrum(np.ndarray[CINT16_t] frame):
     cdef np.ndarray tmp = fft(frame)
+    cdef int features_per_frame = conf.FEATURES_PER_FRAME
+    cdef np.ndarray[CUINT64_t] result = np.zeros(features_per_frame, dtype=np.float64)
     tmp = np.absolute(np.split(tmp, 2)[0])
     tmp = np.float64(tmp)
-    return extractFeatures(tmp)
+    for i in range(512):
+        result[i/(512/features_per_frame)] += tmp[i]
+    return result
 
 # Preprocessing with Cepstrum
-cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
+cpdef np.ndarray[CUINT64_t] processCepstrum(np.ndarray[CINT16_t] frame):
     cdef Py_ssize_t i
     cdef int features_per_frame = conf.FEATURES_PER_FRAME
     cdef np.ndarray[CUINT64_t] result = np.zeros(features_per_frame, dtype=np.float64)
@@ -314,14 +319,22 @@ cpdef np.ndarray[CUINT64_t] process(np.ndarray[CINT16_t] frame):
         result[i/(512/features_per_frame)] += math.pow(tmp[i], 2)
     return result
 
-
-cdef np.ndarray[CUINT64_t] extractFeatures(np.ndarray[CUINT64_t] in_array):
+    # Preprocessing with Cepstrum
+cpdef np.ndarray[CUINT64_t] processCepsLiftering(np.ndarray[CINT16_t] frame):
     cdef Py_ssize_t i
-    cdef np.ndarray[CUINT64_t] result = np.empty(64, dtype=np.float64)
-    cdef Py_ssize_t k = 0
-    #print("length in_array: " + str(len(in_array)) + " | length result: " + str(len(result)))
-    for i in range(len(in_array)):
-        result[k%16] += in_array[i]
-        k += 1
-    #print("Type of: " + str(type(result[0])))
+    cdef int features_per_frame = conf.FEATURES_PER_FRAME
+    cdef int liftering_number = conf.LIFTERING_NUMBER
+    cdef np.ndarray[CUINT64_t] result = np.zeros(features_per_frame, dtype=np.float64)
+    cdef np.ndarray tmp = fft(frame)
+    tmp = np.absolute(tmp)
+    for i in range(1, 513):
+        tmp[i] *= tmp[i]
+        tmp[1024 - i] = tmp[i]
+    tmp = np.log(tmp)
+    tmp = ifft(tmp)
+    tmp = np.absolute(np.split(tmp, 2)[0])
+    for i in range(liftering_number + 1):
+        tmp[i] = 0.
+    for i in range(512):
+        result[i/(512/features_per_frame)] += math.pow(tmp[i], 2)
     return result
