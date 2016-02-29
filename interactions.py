@@ -1,13 +1,11 @@
-# import of python modules
+"""Audio Trainer v1.0"""
+# import of own scripts
 import os
 import pyaudio
 import time
-import wave
-import numpy as np
 
-#own imports
+# import of own scripts
 import config as conf
-import functions as f
 
 # instantiate PyAudio
 p = pyaudio.PyAudio()
@@ -17,10 +15,6 @@ RATE = int(p.get_device_info_by_index(conf.DEVICE_INDEX)['defaultSampleRate'])
 
 # get all the parameters for training
 def getTrainParameters():
-
-    # TODO for better testing we don't ask. remove befre finish
-    #return(recordName, 3, 6, recordNumber)
-
     records = []
     isUserInputNotANumber = True
     selectedOption = 0
@@ -203,9 +197,7 @@ def callback(in_data, frame_count, time_info, status):
         data = wf[i]
     else:
         data = ""
-
     i += 2
-    
     return (data, pyaudio.paContinue)
 
 #returns an empty string if the audio data should be stored. 
@@ -215,20 +207,14 @@ def wantToStoreRecord(frames):
 
     i = 0
     wf = frames
-
     stream = p.open(format=conf.FORMAT,
                     channels=conf.CHANNELS,
                     rate=RATE,
                     output=True,
                     stream_callback=callback)
-    
-    # start the stream (4)
     stream.start_stream()
-
-    # wait for stream to finish (5)
     while stream.is_active():
         time.sleep(0.1)
-
     stream.stop_stream()
     stream.close()
     return raw_input("Press Enter to save that record or input anything for not saving it.")

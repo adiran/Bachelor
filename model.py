@@ -1,15 +1,13 @@
+"""Audio Trainer v1.0"""
+# import of own scripts
 import copy
-import numpy as np
-import os
-
-import functions as f
-
+import os.path
 
 class Model(object):
     # Constructor
 
     _features = None
-    _tolerance = None
+    _threshold = None
     _name = None
     _score = -1.0
     _matches = -1
@@ -17,10 +15,10 @@ class Model(object):
     _loaded = False
     _script = None
 
-    def __init__(self, features, tolerance, name, influencedBy, script):
+    def __init__(self, features, threshold, name, influencedBy, script):
         self.features = features
         self.extractedFeatures = copy.deepcopy(features)
-        self.tolerance = tolerance
+        self.threshold = threshold
         self.name = name
         self.influencedBy = influencedBy
         self.script = script
@@ -30,8 +28,8 @@ class Model(object):
         return copy.deepcopy(self._features)
 
     @property
-    def tolerance(self):
-        return copy.deepcopy(self._tolerance)
+    def threshold(self):
+        return copy.deepcopy(self._threshold)
     
     @property
     def name(self):
@@ -65,10 +63,10 @@ class Model(object):
         if self._features == None:
             self._features = features
 
-    @tolerance.setter
-    def tolerance(self, tolerance):
-        if self._tolerance == None:
-            self._tolerance = tolerance
+    @threshold.setter
+    def threshold(self, threshold):
+        if self._threshold == None:
+            self._threshold = threshold
 
     @name.setter
     def name(self, name):
@@ -92,13 +90,13 @@ class Model(object):
 
     def calculateScore(self):
         if self._matches >= 0:
-            tmpTolerance = 0.
+            tmpThreshold = 0.
             tmpInfluenceCounter = 0.
-            for i in self._tolerance:
-                tmpTolerance += i/len(self._tolerance)
+            for i in self._threshold:
+                tmpThreshold += i/len(self._threshold)
             for i in self._influencedBy:
                 tmpInfluenceCounter += i/len(self._influencedBy)
-            self._score = float((float(self._matches) * float(tmpInfluenceCounter)) / float(tmpTolerance))
+            self._score = float((float(self._matches) * float(tmpInfluenceCounter)) / float(tmpThreshold))
 
     def activate(self):
         self._loaded = True

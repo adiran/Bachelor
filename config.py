@@ -42,11 +42,11 @@ FEATURES_PER_FRAME = 64
 # If False than LIFTERING has no effect
 # Remember to recalculate all the models if you change this since a Spectral model 
 # can't be recognized if recording extraxt Cepstral Features
-CEPSTRUM = True
+CEPSTRUM = False
 
 # Liftering for Cepstrum
 # has no effect if CEPSTRUM == False
-LIFTERING = True
+LIFTERING = False
 
 # How many Features should be dropped by Liftering. Usually 15-20
 LIFTERING_NUMBER = 15

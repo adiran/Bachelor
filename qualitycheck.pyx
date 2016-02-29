@@ -1,11 +1,13 @@
+"""Audio Trainer v1.0"""
+# Imports of python libs
 import os.path
-import functions as f
 import wave
-import config as conf
 import numpy as np
 cimport numpy as np
-from scipy.fftpack import fft
-import copy
+
+# import of own scripts
+import functions as f
+import config as conf
 
 # Cython stuff
 CUINT64 = np.float64
@@ -17,7 +19,7 @@ cpdef void qualityCheck(tuple data) except *:
     cdef model = data[0]
     cdef str fileName = data[1]
     cdef int counter = data[2]
-    cdef np.ndarray[CUINT64_t] tolerance = model.tolerance
+    cdef np.ndarray[CUINT64_t] threshold = model.threshold
     cdef list features = model.features
     cdef int wavenumber = 1
     cdef int result = 0
@@ -32,8 +34,6 @@ cpdef void qualityCheck(tuple data) except *:
     cdef CUINT64_t compared
     cdef cepstrum = conf.CEPSTRUM
 
-
-    #print("QS Number: " + str(counter) + " | fileName: " + fileName)
 
     # do it while there are wave files
     while os.path.isfile(str(fileName) + "/" + str(wavenumber) + ".wav"):
@@ -63,29 +63,23 @@ cpdef void qualityCheck(tuple data) except *:
                     else:
                         feature = f.processSpectrum(frame)
                     compared = f.compare(feature, features[modelPosition])
-                    #print("QS Number: " + str(counter) + ", frame Nr: " + str((i+1)/2) + ", compared: " + str(compared) + ", tolerance-compared: " + str(tolerance[modelPosition] - compared))
-                    if compared < tolerance[modelPosition]:
+                    if compared < threshold[modelPosition]:
                         recognized = True
                         frameCount = conf.FRAME_COUNT
-                        #print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
                     # if we are not in the same frame of the model as last
                     # time we check if we are in the next frame
                     elif recognized:
-                        #print("length model: " + str(len(features)) + " | modelPosition + 1: " + str(modelPosition + 1))
                         # maby we are in the next model frame
-                        if f.compare(feature, features[modelPosition + 1]) < tolerance[modelPosition + 1]:
+                        if f.compare(feature, features[modelPosition + 1]) < threshold[modelPosition + 1]:
                             recognized = True
                             frameCount = conf.FRAME_COUNT
                             modelPosition += 1
-                            #print("QS Number: " + str(counter) + ", recognized frame " + str(modelPosition))
-                            ## recognized last frame of the features. Print it
+                            # recognized last frame of the features. Count it
                             # and reset featuresNumber and modelPosition
                             if modelPosition == (len(features) - 1):
                                 result += 1
-                                #print("fertig")
                                 break
                         else:
-                            #print("QS Number: " + str(counter) + ", frameCount: " + str(frameCount))
                             if frameCount > 0:
                                 frameCount -= 1
                             else:
@@ -95,6 +89,5 @@ cpdef void qualityCheck(tuple data) except *:
         wf.close()
     model.matches = result
     model.calculateScore()
-    print("QS Number: " + str(counter) + " | Matches: " + str(model.matches))
     f.storeModel(model, True, counter)
 

@@ -1,22 +1,16 @@
+"""Audio Trainer v1.0"""
+# import of own scripts
 import numpy as np
 cimport numpy as np
 from scipy.fftpack import fft, ifft
 import copy
 import os
 import pickle
-import time
-import random
-#from features import mfcc
 import math
 
-#own imports
+# import of own scripts
 import config as conf
-import trainRecorded
-import model
 import interactions
-
-#TODO just for testing
-import sys
 
 # Cython stuff
 CFLOAT = np.float64
@@ -56,7 +50,9 @@ cpdef CUINT64_t compare(np.ndarray[CUINT64_t] recordData, np.ndarray[CUINT64_t] 
 cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
     cdef list in_array = copy.deepcopy(in_data[0])
     cdef int optimalFrames = in_data[1]
+    # stores which frames are member of the same result frame
     cdef list frameMember = []
+    # stores the diffrences between the frames
     cdef list diffrences = []
     cdef CUINT64_t diffrence = 0.
     cdef CUINT64_t compared = 0.
@@ -83,11 +79,13 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
     cdef int length = len(in_array)
     cdef np.ndarray[int] counterFrames = np.zeros(optimalFrames, dtype=int)
     cdef list result = []
-    cdef np.ndarray[CUINT64_t] resultTolerance = np.zeros(optimalFrames, dtype=np.float64)
+    cdef np.ndarray[CUINT64_t] resultThreshold = np.zeros(optimalFrames, dtype=np.float64)
+    # calculate the diffrences between all frames an set the frameMember
     for i in range(length):
         frameMember.append(i)
         if i < length -1:
             diffrences.append(compare(in_array[i], in_array[i+1]))
+    # in every cycle the number of feature vectors of the result is decreased by one until we only have optimalFrames of feature vectors
     while length > optimalFrames:
         diffrence = np.finfo(np.float64).max - np.finfo(np.float64).eps
         counter = 0
@@ -103,14 +101,17 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
         tmpFrame = np.zeros_like(in_array[0], dtype=np.float64)
         tmpFrameBefore = np.zeros_like(in_array[0], dtype=np.float64)
         tmpFrameAfter = np.zeros_like(in_array[0], dtype=np.float64)
+        # get the smallest diffrence so we can merge this two frames and the position
         for i in range(len(diffrences)):
             if diffrences[i] < diffrence:
                 pos = i
                 diffrence = diffrences[i]
+        # store the greatest diffrence of two frames that are merged
         if diffrence > maxDiffrence:
             maxDiffrence = diffrence
         tmpFrameMember = frameMember[pos + 1]
         j = pos + 1
+        # set frameMember of all input frames, that are member of the second frame in result that is merged to the frameMember of the first frame that is merged
         while frameMember[j] == tmpFrameMember:
             frameMember[j] = frameMember[pos]
             if j + 1 < len(frameMember):
@@ -119,7 +120,9 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
                 break
         tmpFrameMember = frameMember[pos]
         diffrences[pos] = np.finfo(np.float64).max
+        # find the frame before the merge, the frame to merge and the frame after the merge to calculate the threshold
         for i in range(len(in_array)):
+            # if we are in front of the frame to merge
             if frameMember[i] < tmpFrameMember:
                 if tmpFrameMemberBeforeAfter == frameMember[i]:
                     posEndBefore = i
@@ -129,6 +132,7 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
                     posBegBefore = i
                     posEndBefore = i
                     counterBefore = 1
+            # if we are in the frame to merge
             elif frameMember[i] == tmpFrameMember:
                 if posBeg == -1:
                     posBeg = i
@@ -139,30 +143,30 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
                             tmpFrameMemberBeforeAfter = frameMember[i + 1]
                             posBegAfter = i + 1
                 counter += 1
+            # if we are in the frame after the merge
             elif frameMember[i] == tmpFrameMemberBeforeAfter:
                 counterAfter += 1
                 posEndAfter = i
             # we got the frame before the merge, the frame to merge and the frame after the merge. we don't need to go further through the array
             else:
                 break
+        # calculate the merged frame
         for i in range(posBeg, posEnd + 1):
             tmpFrame = np.add(tmpFrame, np.divide(in_array[i], np.float64(counter)))
-        #print("posBeg: " + str(posBeg) + " posEnd: " + str(posEnd) + " posBegBefore: " + str(posBegBefore) + " posEndBefore: " + str(posEndBefore) + " posBegAfter: " + str(posBegAfter) + " posEndAfter: " + str(posEndAfter))
-        # if there are frames befor the merged frames 
+        # if there are frames befor the merged frames calculate the new diffrence
         if posBegBefore > -1:
             for i in range(posBegBefore, posEndBefore + 1):
                 tmpFrameBefore = np.add(tmpFrameBefore, np.divide(in_array[i], np.float64(counterBefore)))
             diffrences[posEndBefore] = compare(tmpFrameBefore, tmpFrame)
-            #print("Recalculated diffrences[" + str(posEndBefore) + "] to " +str(diffrences[posEndBefore]))
-        # if there are frames after the merged frames
+        # if there are frames after the merged frames calculate the new diffrence
         if posEnd < len(diffrences):
             for i in range(posBegAfter, posEndAfter + 1):
                 tmpFrameAfter = np.add(tmpFrameAfter, np.divide(in_array[i], np.float64(counterAfter)))
             diffrences[posEnd] = compare(tmpFrame, tmpFrameAfter)
-            #print("Recalculated diffrences[" + str(posEnd) + "] to " +str(diffrences[posEnd]))
         length -= 1
     tmpFrameMember = 0
     j = 0
+    # count how many frames are merged to every result frame
     for i in range(len(in_array)):
         if tmpFrameMember == frameMember[i]:
             counterFrames[j] += 1
@@ -173,6 +177,7 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
     j = 0
     tmpFrame = np.zeros_like(in_array[0], dtype=np.float64)
     counter = counterFrames[0]
+    # calculate the result frames
     for i in range(len(in_array)):
         if counter > 0:
             tmpFrame = np.add(tmpFrame, np.divide(in_array[i], np.float64(counterFrames[j])))
@@ -183,6 +188,7 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
             tmpFrame = np.divide(in_array[i], np.float64(counterFrames[j]))
             counter = counterFrames[j] - 1
     result.append(tmpFrame)
+    # delete the smallest values to use some kind of a frequency band filter
     if conf.FREQUENCY_BAND_TRAINING:
         for i in range(optimalFrames):
             counter = conf.FREQUENCY_BANDS_TO_DROP
@@ -211,21 +217,22 @@ cpdef tuple minimalizeAndCalcThreshold(tuple in_data):
                 if math.isnan(result[posBeg][j]):
                     in_array[i][j] = np.nan
     j = 0
+    # get the greatest threshold at which to frames are merged an set it as the threshold for this result frame
     for i in range(len(in_array) - 1):
         if frameMember[i] == frameMember[i + 1]:
             compared = compare(in_array[i], in_array[i + 1])
-            if compared > resultTolerance[j]:
-                resultTolerance[j] = compared
+            if compared > resultThreshold[j]:
+                resultThreshold[j] = compared
         else:
             j += 1
             if i < len(in_array) - 3:
                 if frameMember[i + 1] != frameMember[i + 2]:
-                    resultTolerance[j] = maxDiffrence
-    if resultTolerance[optimalFrames - 1] == 0.:
-        resultTolerance[optimalFrames - 1] = maxDiffrence
+                    resultThreshold[j] = maxDiffrence
+    if resultThreshold[optimalFrames - 1] == 0.:
+        resultThreshold[optimalFrames - 1] = maxDiffrence
     for i in range(optimalFrames):
-        resultTolerance[i] = (resultTolerance[i] + maxDiffrence)/2
-    return (result, resultTolerance)
+        resultThreshold[i] = (resultThreshold[i] + maxDiffrence)/2
+    return (result, resultThreshold)
 
 
 # loads previously stored models
@@ -254,7 +261,7 @@ cpdef np.ndarray loadActivatedModels():
 
 
 
-# stores a model at the modelFolder or in tmp folder
+# stores a new model in the modelFolder or in tmp folder, asks for other name if model already exists
 cpdef void storeModel(model, bint tmp=False, int iteration=0) except *:
     cdef str fileName
     cdef str dirName
@@ -273,7 +280,7 @@ cpdef void storeModel(model, bint tmp=False, int iteration=0) except *:
     pickle.dump(model, outputFile, pickle.HIGHEST_PROTOCOL)
     outputFile.close()
 
-# stores a model at the modelFolder or in tmp folder
+# overrides a model in the modelFolde
 cpdef void storeSameModel(model) except *:
     cdef str fileName
     cdef str dirName
@@ -319,7 +326,7 @@ cpdef np.ndarray[CUINT64_t] processCepstrum(np.ndarray[CINT16_t] frame):
         result[i/(512/features_per_frame)] += math.pow(tmp[i], 2)
     return result
 
-    # Preprocessing with Cepstrum
+    # Preprocessing with Cepstrum and liftering
 cpdef np.ndarray[CUINT64_t] processCepsLiftering(np.ndarray[CINT16_t] frame):
     cdef Py_ssize_t i
     cdef int features_per_frame = conf.FEATURES_PER_FRAME

@@ -1,14 +1,11 @@
 """Audio Trainer v1.0"""
+# Imports of python libs
 import pyaudio
 import wave
 import time
-import sys
-import struct
-import math
-import audioop
-import os.path
+
+# import of own scripts
 import config as conf
-import numpy as np
 import functions as f
 import interactions
 
@@ -50,7 +47,7 @@ def main():
                 input_device_index=conf.DEVICE_INDEX)
     raw_input("Press Enter key to start recording of background noise.")
     # wait to prevent to capture the hitting of enter key
-    time.sleep(.08)#        print("1")
+    time.sleep(.08)
     waveFrames = []
     # start audio stream
     stream.start_stream()
@@ -101,8 +98,6 @@ def main():
 
         # wait to prevent to capture the hitting of enter key
         time.sleep(.08)
-#        print("1")
-
         waveFrames = []
 
         # start audio stream

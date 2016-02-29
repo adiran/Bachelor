@@ -1,6 +1,8 @@
+"""Audio Trainer v1.0"""
+# import of own scripts
 import os
 
-#own imports
+# import of own scripts
 import functions as f
 import config as conf
 
@@ -22,8 +24,8 @@ def main():
                  str(models[i].matches) +
                  " | Influenced by:\t" +
                  str(models[i].influencedBy) +
-                 " | Tolerance:\t" +
-                 str(models[i].tolerance) +
+                 " | Threshold:\t" +
+                 str(models[i].threshold) +
                  " | Score:\t" +
                  str(models[i].score) +
                  " | Loaded:\t" +
@@ -96,6 +98,26 @@ def main():
                         print("There is no model with such a high number.")
                 except ValueError:
                     print("That was not a number")
+            elif userInput == "c":
+                userInput = raw_input("For which model do you want to change the path to the script? ")
+                try:
+                    selectedModel = int(userInput) - 1
+                    if selectedModel < len(models):
+                        if selectedModel >= 0:
+                            oldScriptPath = models[selectedModel].script
+                            newPath = raw_input("Where is the script? (Current script is at " + oldScriptPath + ". ")
+                            while os.path.isfile(newPath) == False:
+                                print("It seems that there is no script at " + newPath)
+                                newPath = raw_input("Where is the script? (Current script is at " + oldScriptPath + ". ")
+                            models[selectedModel].script = newPath
+                            f.storeSameModel(models[selectedModel])
+                            isUserInputWrong = False
+                        else:
+                            print("There are no models with a number smaller or equal 0.")
+                    else:
+                        print("There is no model with such a high number.")
+                except ValueError:
+                    print("That was not a number")
             elif userInput == "h":
                 isUserInputWrong = False
                 printCommands()
@@ -113,4 +135,5 @@ def printCommands():
     print("\tdel\t(del)ete a model")
     print("\tr\t(r)ename a model")
     print("\th\tprint this (h)elp again")
+    print("\tc\t(c)hange the path to the script that should be executed")
     print("\tq\t(q)uit the model management")

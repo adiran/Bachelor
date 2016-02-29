@@ -1,5 +1,5 @@
-
-#own imports
+"""Audio Trainer v1.0"""
+# import of own scripts
 import record
 import trainRecorded as train
 import listen

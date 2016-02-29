@@ -1,38 +1,20 @@
 """Audio Trainer v1.0"""
 # Imports of python libs
-import pyaudio
 import wave
 import time
-import sys
-import struct
-import math
-import audioop
 import os.path
-import random
-import config as conf
 import numpy as np
 import multiprocessing
 import copy
-import gc
-#from memory_profiler import profile
-#from guppy import hpy
-import pdb
-
-from scipy.fftpack import fft
 
 # import of own scripts
 import functions as f
 import qualitycheck as q
 import interactions
 import model as modelImport
+import config as conf
 
 
-
-def modelMergeNew(data):
-    model, minFrames, maxFrames, name, iteration = data
-    f.modelMergeNew(model, minFrames, maxFrames, name, iteration)
-
-#@profile
 def preprocess(in_data):
     wf = in_data[0]
     wavenumber = in_data[1]
@@ -50,7 +32,6 @@ def preprocess(in_data):
             else:
                 frame = np.append(
                     frame, np.fromstring(framesAsString, np.int16))
-                #print("1 Length frame: " + str(len(frame)) + " | frame[0]: " + str(frame[0]))
                 if conf.CEPSTRUM:
                     if conf.LIFTERING:
                         frame = f.processCepsLiftering(frame)
@@ -58,13 +39,10 @@ def preprocess(in_data):
                         frame = f.processCepstrum(frame)
                 else:
                     frame = f.processSpectrum(frame)
-                #print("2 Length frame: " + str(len(frame)) + " | frame[0]: " + str(frame[0]))
                 number.append(frame)
                 switch = True
             del framesAsString
 
-            # free memory
-            #gc.collect()
         print("Processed file " + str(wavenumber) + ".wav")
         return number
     else:
@@ -73,7 +51,7 @@ def preprocess(in_data):
 
 def main():
     global models
-    global modelTolerance
+    global modelThreshold
     global modelScore
 
     print("")
@@ -82,7 +60,6 @@ def main():
 
     model = []
     wavenumber = 1
-    # TODO just for testing. recordsName as method argument needed
     fileName, modelName, optimalFrames, scriptpath = interactions.getTrainParameters()
     beginning = time.time()
     # do it while there are wave files
@@ -92,13 +69,8 @@ def main():
         print("File " + str(fileName) + "/" + str(wavenumber) +
                 ".wav found.")
         wavenumber += 1
-    multipro = False
-    if multipro:
-        pool = multiprocessing.Pool(processes=4)
-        model = pool.map(preprocess, wf)
-    else:
-        for i in wf:
-            model.append(preprocess(i))
+    for i in wf:
+        model.append(preprocess(i))
     for i in wf:
         i[0].close()
     wavenumber -= 1
@@ -112,26 +84,16 @@ def main():
                  optimalFrames))
         beginning = time.time()
         f.clearTmpFolder()
-        #TODO just for testing drop that iout before finish
-        multipro = True
-        print(str(len(data)))
-        if multipro:
-            pool = multiprocessing.Pool(processes=4)
-            dasReturnZeugs = pool.map(f.minimalizeAndCalcTolerance, data)
-        else:
-            for i in data:
-                f.modelMergeNew(i)
+        pool = multiprocessing.Pool(processes=4)
+        result = pool.map(f.minimalizeAndCalcThreshold, data)
         minimalizedRecords = []
-        calculatedTolerances = []
-        for i in dasReturnZeugs:
+        calculatedThresholds = []
+        for i in result:
             minimalizedRecords.append(i[0])
-            calculatedTolerances.append(i[1])
+            calculatedThresholds.append(i[1])
 
         zeroFrame = np.zeros(conf.FEATURES_PER_FRAME, dtype=np.float64)
         models = []
-        #for i in range(len(minimalizedRecords)):
-            #for j in range(optimalFrames):
-                #print("Iteration: " + str(i) + "| Frame: " + str(j) + " | tolerance: " + str(calculatedTolerances[0][j]) + " | compared: " + str(f.compare(minimalizedRecords[i][j], minimalizedRecords[0][j], debug=True)))
         for i in range(len(minimalizedRecords)):
             features = copy.deepcopy(minimalizedRecords[i])
             tmpFeatures = [copy.deepcopy(zeroFrame) for number in range(optimalFrames)]
@@ -142,18 +104,14 @@ def main():
             for h in range(optimalFrames):    
                 # we try all recordings
                 for j in range(len(minimalizedRecords)):
-                    #for k in range(posCounter[j], optimalFrames):
-                    if f.compare(minimalizedRecords[j][h], features[h]) < calculatedTolerances[i][h]:
+                    if f.compare(minimalizedRecords[j][h], features[h]) < calculatedThresholds[i][h]:
                         tmpFeatures[h] += minimalizedRecords[j][h]
-                        #posCounter[j] = k + 1
                         tmpCounter[h] += 1
             for h in range(optimalFrames):
                 tmpFeatures[h] = np.divide(tmpFeatures[h], tmpCounter[h])
-                print("Iteration: " + str(i) + " | tmpCounter[" + str(h) + "]: " + str(tmpCounter[h]))
                 counter += tmpCounter[h]
             counter /= optimalFrames
-            print("Iteration: " + str(i) + " | counter: " + str(counter))
-            models.append(modelImport.Model(tmpFeatures, calculatedTolerances[i], modelName, tmpCounter, scriptpath))
+            models.append(modelImport.Model(tmpFeatures, calculatedThresholds[i], modelName, tmpCounter, scriptpath))
 
 
         print()
@@ -163,19 +121,12 @@ def main():
         data = []
         for i in range(len(models)):
             data.append((models[i], fileName, i))
-        multipro = True
-        if multipro:
-            pool = multiprocessing.Pool(processes=4)
-            pool.map(q.qualityCheck, data)
-        else:
-            for i in data:
-                q.qualityCheck(i)
+        pool = multiprocessing.Pool(processes=4)
+        pool.map(q.qualityCheck, data)
         models = f.loadModels(tmp=True)
         print("Computed the scores in " + str(time.time() - beginning) + " seconds.")
         print()
         for i in range(len(models)):
-            #print("Length extractedFeatures: " + str(len(models[i].extractedFeatures[0])))
-            #print("Type Features: " + str(type(models[i].features[0])) + " | Type FeatureValue: " + str(type(models[i].features[0][0])))
             print("Model Nr:\t" +
                   str(i +
                       1) +
@@ -185,8 +136,8 @@ def main():
                   str(models[i].matches) +
                   " | Influenced by:\t" +
                   str(models[i].influencedBy) +
-                  " | Tolerance:\t" +
-                  str(models[i].tolerance) +
+                  " | Threshold:\t" +
+                  str(models[i].threshold) +
                   " | Score:\t" +
                   str(models[i].score))
 
@@ -195,7 +146,3 @@ def main():
         modelNumber = interactions.getModelNumber(len(models)+1) - 1
         print("You selected Model " + str(modelNumber) + " with " + str(models[modelNumber].matches) + " Matches and a Score of: " + str(models[modelNumber].score))
         f.storeModel(models[modelNumber])
-
-
-#TODO just for testing
-#main()

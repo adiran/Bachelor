@@ -1,21 +1,15 @@
 """Audio Trainer v1.0"""
+# Imports of python libs
 import pyaudio
-import wave
 import time
-import sys
-import struct
-import math
-import audioop
-import config as conf
-import numpy as np
-import functions as f
-from scipy.fftpack import fft
 
+# import of own scripts
 import listenC
+import config as conf
 
 def callback(in_data, frame_count, time_info, status):
-    #if status > 0:
-        #print("Status: " + str(status))
+    if status > 0:
+        print("Status: " + str(status))
     listenC.listen(in_data)
     return (None, pyaudio.paContinue)
 
